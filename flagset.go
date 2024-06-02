@@ -19,8 +19,9 @@ type Opt struct {
 }
 
 type FlagSet struct {
-	fs   *flag.FlagSet
-	opts map[string]Opt
+	fs     *flag.FlagSet
+	opts   map[string]Opt
+	parsed []string
 }
 
 func New(name string) *FlagSet {
@@ -35,6 +36,10 @@ func New(name string) *FlagSet {
 
 func (fs *FlagSet) Collected() map[string]Opt {
 	return fs.opts
+}
+
+func (fs *FlagSet) Parsed() []string {
+	return fs.parsed
 }
 
 func (fs *FlagSet) Arg(i int) string {
@@ -62,8 +67,8 @@ func (fs *FlagSet) Name() string {
 }
 
 func (fs *FlagSet) Parse(arguments []string) error {
-	arguments = explodeShortArgs(arguments)
-	return fs.fs.Parse(arguments)
+	fs.parsed = explodeShortArgs(arguments)
+	return fs.fs.Parse(fs.parsed)
 }
 
 func (fs *FlagSet) Visit(fn func(*flag.Flag)) {
@@ -104,7 +109,20 @@ func (fs *FlagSet) Usage() string {
 }
 
 func explodeShortArgs(args []string) []string {
-	return args
+	var exed []string
+
+	for _, arg := range args {
+		if len(arg) > 1 && arg[0] == '-' && arg[1] != '-' {
+			for _, a := range arg[1:] {
+				exed = append(exed, "-"+string(a))
+			}
+			continue
+		}
+
+		exed = append(exed, arg)
+	}
+
+	return exed
 }
 
 func longsAndShorts(flags string) (longs, shorts []string) {

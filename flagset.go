@@ -13,7 +13,7 @@ import (
 type Opt struct {
 	Longs  []string
 	Shorts []string
-	Help   string
+	Usage  string
 	Type   string
 	Init   string
 }
@@ -73,32 +73,33 @@ func (fs *FlagSet) VisitAll(fn func(*flag.Flag)) {
 	fs.fs.VisitAll(fn)
 }
 
-func (fs *FlagSet) Opt(val any, flagNames, help, placing string) {
-	longs, shorts := longsAndShorts(flagNames)
+func (fs *FlagSet) Opt(val any, names, usage string) {
+	longs, shorts := longsAndShorts(names)
 	v := reflect.ValueOf(val).Elem()
 
-	fs.opts[flagNames] = Opt{
+	fs.opts[names] = Opt{
 		Longs:  longs,
 		Shorts: shorts,
-		Help:   help,
+		Usage:  usage,
 		Type:   v.Type().Name(),
 		Init:   fmt.Sprintf("%v", v),
 	}
 
 	for _, long := range longs {
-		addOptTo(fs.fs, val, long, help)
+		addOptTo(fs.fs, val, long, usage)
 	}
+
 	for _, short := range shorts {
-		addOptTo(fs.fs, val, short, help)
+		addOptTo(fs.fs, val, short, usage)
 	}
 }
 
-func addOptTo(fs *flag.FlagSet, val any, flagName, help string) {
+func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {
 	switch v := val.(type) {
 	case *string:
-		fs.StringVar(v, flagName, *v, help)
+		fs.StringVar(v, flagName, *v, usage)
 	case *bool:
-		fs.BoolVar(v, flagName, *v, help)
+		fs.BoolVar(v, flagName, *v, usage)
 	}
 }
 
@@ -114,7 +115,7 @@ func longsAndShorts(flags string) (longs, shorts []string) {
 	return longs, shorts
 }
 
-func (fs *FlagSet) Help() string {
+func (fs *FlagSet) Usage() string {
 	buf := &bytes.Buffer{}
 	fs.fs.SetOutput(buf)
 	defer fs.fs.SetOutput(io.Discard)

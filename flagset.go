@@ -20,7 +20,7 @@ type Opt struct {
 
 type FlagSet struct {
 	fs   *flag.FlagSet
-	opts map[string]Opt // placing arg as key
+	opts map[string]Opt
 }
 
 func New(name string) *FlagSet {

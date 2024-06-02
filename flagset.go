@@ -62,6 +62,7 @@ func (fs *FlagSet) Name() string {
 }
 
 func (fs *FlagSet) Parse(arguments []string) error {
+	arguments = explodeShortArgs(arguments)
 	return fs.fs.Parse(arguments)
 }
 
@@ -94,13 +95,16 @@ func (fs *FlagSet) Opt(val any, names, usage string) {
 	}
 }
 
-func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {
-	switch v := val.(type) {
-	case *string:
-		fs.StringVar(v, flagName, *v, usage)
-	case *bool:
-		fs.BoolVar(v, flagName, *v, usage)
-	}
+func (fs *FlagSet) Usage() string {
+	buf := &bytes.Buffer{}
+	fs.fs.SetOutput(buf)
+	defer fs.fs.SetOutput(io.Discard)
+	fs.fs.Usage()
+	return buf.String()
+}
+
+func explodeShortArgs(args []string) []string {
+	return args
 }
 
 func longsAndShorts(flags string) (longs, shorts []string) {
@@ -115,10 +119,11 @@ func longsAndShorts(flags string) (longs, shorts []string) {
 	return longs, shorts
 }
 
-func (fs *FlagSet) Usage() string {
-	buf := &bytes.Buffer{}
-	fs.fs.SetOutput(buf)
-	defer fs.fs.SetOutput(io.Discard)
-	fs.fs.Usage()
-	return buf.String()
+func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {
+	switch v := val.(type) {
+	case *string:
+		fs.StringVar(v, flagName, *v, usage)
+	case *bool:
+		fs.BoolVar(v, flagName, *v, usage)
+	}
 }

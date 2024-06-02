@@ -23,10 +23,6 @@ type FlagSet struct {
 	opts map[string]Opt // placing arg as key
 }
 
-func (fs *FlagSet) Collected() map[string]Opt {
-	return fs.opts
-}
-
 func New(name string) *FlagSet {
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -35,6 +31,10 @@ func New(name string) *FlagSet {
 		fs:   fs,
 		opts: make(map[string]Opt),
 	}
+}
+
+func (fs *FlagSet) Collected() map[string]Opt {
+	return fs.opts
 }
 
 func (fs *FlagSet) Arg(i int) string {

@@ -1,7 +1,6 @@
 package flagset
 
 import (
-	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -11,17 +10,22 @@ import (
 )
 
 type Opt struct {
-	Longs  []string
-	Shorts []string
-	Usage  string
-	Type   string
-	Init   string
+	Names   string
+	Longs   []string
+	Shorts  []string
+	Type    string
+	Default string
+	Usage   string
+	Meta    map[string]any
 }
 
 type FlagSet struct {
 	fs     *flag.FlagSet
-	opts   map[string]Opt
+	opts   []Opt
 	parsed []string
+
+	HideTypeHint    bool
+	HideDefaultHint bool
 }
 
 func New(name string) *FlagSet {
@@ -29,12 +33,11 @@ func New(name string) *FlagSet {
 	fs.SetOutput(io.Discard)
 
 	return &FlagSet{
-		fs:   fs,
-		opts: make(map[string]Opt),
+		fs: fs,
 	}
 }
 
-func (fs *FlagSet) Collected() map[string]Opt {
+func (fs *FlagSet) Opts() []Opt {
 	return fs.opts
 }
 
@@ -79,17 +82,30 @@ func (fs *FlagSet) VisitAll(fn func(*flag.Flag)) {
 	fs.fs.VisitAll(fn)
 }
 
-func (fs *FlagSet) Opt(val any, names, usage string) {
+func (fs *FlagSet) Opt(val any, names, usage string, metas ...map[string]any) {
 	longs, shorts := longsAndShorts(names)
 	v := reflect.ValueOf(val).Elem()
 
-	fs.opts[names] = Opt{
-		Longs:  longs,
-		Shorts: shorts,
-		Usage:  usage,
-		Type:   v.Type().Name(),
-		Init:   fmt.Sprintf("%v", v),
+	t := v.Type().Name()
+	def := fmt.Sprintf("%v", v)
+	m := conMeta{fs.HideTypeHint, fs.HideDefaultHint}.make(t, def)
+
+	for _, meta := range metas {
+		for k, v := range meta {
+			m[k] = v
+		}
 	}
+
+	opt := Opt{
+		Names:   names,
+		Longs:   longs,
+		Shorts:  shorts,
+		Type:    t,
+		Default: def,
+		Usage:   usage,
+		Meta:    m,
+	}
+	fs.opts = append(fs.opts, opt)
 
 	for _, long := range longs {
 		addOptTo(fs.fs, val, long, usage)
@@ -98,14 +114,6 @@ func (fs *FlagSet) Opt(val any, names, usage string) {
 	for _, short := range shorts {
 		addOptTo(fs.fs, val, short, usage)
 	}
-}
-
-func (fs *FlagSet) Usage() string {
-	buf := &bytes.Buffer{}
-	fs.fs.SetOutput(buf)
-	defer fs.fs.SetOutput(io.Discard)
-	fs.fs.Usage()
-	return buf.String()
 }
 
 func explodeShortArgs(args []string) []string {

@@ -1,6 +1,7 @@
 package flagset
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -71,7 +72,16 @@ func (fs *FlagSet) Name() string {
 
 func (fs *FlagSet) Parse(arguments []string) error {
 	fs.parsed = explodeShortArgs(arguments)
-	return fs.fs.Parse(fs.parsed)
+	if err := fs.fs.Parse(fs.parsed); err != nil {
+		if !errors.Is(err, flag.ErrHelp) {
+			return fmt.Errorf("flagset: parse: %w", err)
+		}
+		if h, ok := findFirstHelp(arguments); ok {
+			return fmt.Errorf("flagset: parse: flag provided but not defined: %s", h)
+		}
+		return fmt.Errorf("flagset: parse: (should not encounter) %w", err)
+	}
+	return nil
 }
 
 func (fs *FlagSet) Visit(fn func(*flag.Flag)) {
@@ -131,6 +141,15 @@ func explodeShortArgs(args []string) []string {
 	}
 
 	return exed
+}
+
+func findFirstHelp(args []string) (string, bool) {
+	for _, arg := range args {
+		if arg == "-h" || arg == "--h" || arg == "--help" {
+			return strings.ReplaceAll(arg, "--", "-"), true
+		}
+	}
+	return "", false
 }
 
 func longsAndShorts(flags string) (longs, shorts []string) {

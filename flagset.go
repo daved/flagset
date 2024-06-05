@@ -62,15 +62,19 @@ func (fs *FlagSet) Name() string {
 
 func (fs *FlagSet) Parse(arguments []string) error {
 	fs.parsed = explodeShortArgs(arguments)
+
 	if err := fs.fs.Parse(fs.parsed); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
 			return fmt.Errorf("flagset: parse: %w", err)
 		}
+
 		if h, ok := findFirstHelp(arguments); ok {
 			return fmt.Errorf("flagset: parse: flag provided but not defined: %s", h)
 		}
+
 		return fmt.Errorf("flagset: parse: (should not encounter) %w", err)
 	}
+
 	return nil
 }
 
@@ -96,9 +100,8 @@ func (fs *FlagSet) Opt(val any, names, usage string) *Opt {
 	v := reflect.ValueOf(val).Elem()
 	t := v.Type().Name()
 	def := fmt.Sprintf("%v", v)
-	m := conMeta{fs.HideTypeHint, fs.HideDefaultHint}.make(t, def)
 
-	opt := makeOpt(names, longs, shorts, t, def, usage, m)
+	opt := makeOpt(fs, names, longs, shorts, t, def, usage)
 	fs.opts = append(fs.opts, opt)
 
 	return &opt

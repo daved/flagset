@@ -10,7 +10,9 @@ type Opt struct {
 	meta   map[string]any
 }
 
-func makeOpt(ns string, ls, ss []string, t, d, u string, m map[string]any) Opt {
+func makeOpt(fs *FlagSet, ns string, ls, ss []string, t, d, u string) Opt {
+	m := conMeta{fs.HideTypeHint, fs.HideDefaultHint}.make(t, d)
+
 	return Opt{
 		names:  ns,
 		longs:  ls,
@@ -48,14 +50,4 @@ func (o Opt) Usage() string {
 
 func (o Opt) Meta() map[string]any {
 	return o.meta
-}
-
-func (o *Opt) AddMeta(meta map[string]any) {
-	if o.meta == nil {
-		o.meta = make(map[string]any)
-	}
-
-	for k, v := range meta {
-		o.meta[k] = v
-	}
 }

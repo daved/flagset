@@ -10,16 +10,6 @@ import (
 	"unicode/utf8"
 )
 
-type Opt struct {
-	Names   string
-	Longs   []string
-	Shorts  []string
-	Type    string
-	Default string
-	Usage   string
-	Meta    map[string]any
-}
-
 type FlagSet struct {
 	fs     *flag.FlagSet
 	opts   []Opt
@@ -92,30 +82,8 @@ func (fs *FlagSet) VisitAll(fn func(*flag.Flag)) {
 	fs.fs.VisitAll(fn)
 }
 
-func (fs *FlagSet) Opt(val any, names, usage string, metas ...map[string]any) {
+func (fs *FlagSet) Opt(val any, names, usage string) *Opt {
 	longs, shorts := longsAndShorts(names)
-	v := reflect.ValueOf(val).Elem()
-
-	t := v.Type().Name()
-	def := fmt.Sprintf("%v", v)
-	m := conMeta{fs.HideTypeHint, fs.HideDefaultHint}.make(t, def)
-
-	for _, meta := range metas {
-		for k, v := range meta {
-			m[k] = v
-		}
-	}
-
-	opt := Opt{
-		Names:   names,
-		Longs:   longs,
-		Shorts:  shorts,
-		Type:    t,
-		Default: def,
-		Usage:   usage,
-		Meta:    m,
-	}
-	fs.opts = append(fs.opts, opt)
 
 	for _, long := range longs {
 		addOptTo(fs.fs, val, long, usage)
@@ -124,6 +92,16 @@ func (fs *FlagSet) Opt(val any, names, usage string, metas ...map[string]any) {
 	for _, short := range shorts {
 		addOptTo(fs.fs, val, short, usage)
 	}
+
+	v := reflect.ValueOf(val).Elem()
+	t := v.Type().Name()
+	def := fmt.Sprintf("%v", v)
+	m := conMeta{fs.HideTypeHint, fs.HideDefaultHint}.make(t, def)
+
+	opt := makeOpt(names, longs, shorts, t, def, usage, m)
+	fs.opts = append(fs.opts, opt)
+
+	return &opt
 }
 
 func explodeShortArgs(args []string) []string {

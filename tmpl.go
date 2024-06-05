@@ -13,10 +13,11 @@ type tmplData struct {
 }
 
 var tmplText = strings.TrimSpace(`
+{{- if .Opts -}}
 Flags:
 {{range $i, $opt := .Opts -}}
   {{- if $opt.Meta.SkipUsage}}{{continue}}{{end -}}
-  {{if .}}  {{end}}{{if $opt.Shorts}}-{{Join $opt.Shorts ", -"}}{{end}}
+  {{- if .}}  {{end}}{{if $opt.Shorts}}-{{Join $opt.Shorts ", -"}}{{end}}
   {{- if and $opt.Shorts $opt.Longs}}, {{end}}
   {{- if $opt.Longs}}--{{Join $opt.Longs ", --"}}{{end}}
   {{- if $opt.Meta.TypeHint}}  {{end}}{{$opt.Meta.TypeHint}}
@@ -24,6 +25,8 @@ Flags:
 	{{$opt.Usage}}
 
 {{end}}
+{{- else}}
+{{- end}}
 `)
 
 func (fs *FlagSet) Usage() string {

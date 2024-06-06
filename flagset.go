@@ -65,14 +65,15 @@ func (fs *FlagSet) Parse(arguments []string) error {
 
 	if err := fs.fs.Parse(fs.parsed); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
-			return fmt.Errorf("flagset: parse: %w", err)
+			return fmt.Errorf("flagset: parse: %w", mayWrapNotDefined(err))
 		}
 
 		if h, ok := findFirstHelp(arguments); ok {
-			return fmt.Errorf("flagset: parse: flag provided but not defined: %s", h)
+			err = fmt.Errorf("flagset: parse: flag provided but not defined: %s", h)
+			return mayWrapNotDefined(err)
 		}
 
-		return fmt.Errorf("flagset: parse: (should not encounter) %w", err)
+		return nil
 	}
 
 	return nil
@@ -127,7 +128,7 @@ func explodeShortArgs(args []string) []string {
 func findFirstHelp(args []string) (string, bool) {
 	for _, arg := range args {
 		if arg == "-h" || arg == "--h" || arg == "--help" {
-			return strings.ReplaceAll(arg, "--", "-"), true
+			return arg, true
 		}
 	}
 	return "", false
@@ -152,4 +153,32 @@ func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {
 	case *bool:
 		fs.BoolVar(v, flagName, *v, usage)
 	}
+}
+
+type transparentError struct {
+	err error
+	msg string
+}
+
+func (e *transparentError) Error() string {
+	return e.msg
+}
+
+func (e *transparentError) Unwrap() error {
+	return e.err
+}
+
+func mayWrapNotDefined(err error) error {
+	if !strings.Contains(err.Error(), "but not defined:") {
+		return err
+	}
+
+	token := "defined: -"
+	msg := err.Error()
+	_, flag, ok := strings.Cut(msg, token)
+	if ok && len(flag) > 1 && flag[0] != '-' {
+		msg = strings.ReplaceAll(msg, token, token+"-")
+	}
+
+	return &transparentError{err, msg}
 }

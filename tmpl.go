@@ -3,8 +3,8 @@ package flagset
 import (
 	"bytes"
 	"fmt"
-	"html/template"
 	"strings"
+	"text/template"
 )
 
 type tmplData struct {

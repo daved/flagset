@@ -2,18 +2,18 @@ package flagset
 
 import "strings"
 
-type conMeta struct {
+type metaFab struct {
 	HideTypeHint    bool
 	HideDefaultHint bool
 }
 
-func (con conMeta) make(typ, defalt string) map[string]any {
+func (f metaFab) make(typ, defalt string) map[string]any {
 	m := map[string]any{
 		"Type":    typ,
 		"Default": defalt,
 	}
 
-	if !con.HideTypeHint {
+	if !f.HideTypeHint {
 		tHintPre, tHintPost := "=", ""
 		if typ == "bool" {
 			tHintPre, tHintPost = "[=", "]"
@@ -21,7 +21,7 @@ func (con conMeta) make(typ, defalt string) map[string]any {
 		m["TypeHint"] = tHintPre + strings.ToUpper(typ) + tHintPost
 	}
 
-	if !con.HideDefaultHint {
+	if !f.HideDefaultHint {
 		var dHint string
 		if defalt != "" {
 			dHint = "default: " + defalt

@@ -7,11 +7,16 @@ type Opt struct {
 	typ    string
 	defalt string
 	usage  string
-	meta   map[string]any
+	Meta   map[string]any
 }
 
 func makeOpt(fs *FlagSet, ns string, ls, ss []string, t, d, u string) Opt {
-	m := metaFab{fs.HideTypeHint, fs.HideDefaultHint}.make(t, d)
+	m := makeMeta(metaOpts{
+		HideTypeHint:    fs.HideTypeHint,
+		HideDefaultHint: fs.HideDefaultHint,
+		Type:            t,
+		Default:         d,
+	})
 
 	return Opt{
 		names:  ns,
@@ -20,7 +25,7 @@ func makeOpt(fs *FlagSet, ns string, ls, ss []string, t, d, u string) Opt {
 		typ:    t,
 		defalt: d,
 		usage:  u,
-		meta:   m,
+		Meta:   m,
 	}
 }
 
@@ -46,8 +51,4 @@ func (o Opt) Default() string {
 
 func (o Opt) Usage() string {
 	return o.usage
-}
-
-func (o Opt) Meta() map[string]any {
-	return o.meta
 }

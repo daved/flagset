@@ -2,31 +2,43 @@ package flagset
 
 import "strings"
 
-type metaFab struct {
+var (
+	MetaKeyType        = "Type"
+	MetaKeyDefault     = "Default"
+	MetaKeySkipUsage   = "SkipUsage"
+	MetaKeyTypeHint    = "TypeHint"
+	MetaKeyDefaultHint = "DefaultHint"
+
+	defaultPrefix = "default: "
+)
+
+type metaOpts struct {
 	HideTypeHint    bool
 	HideDefaultHint bool
+	Type            string
+	Default         string
 }
 
-func (f metaFab) make(typ, defalt string) map[string]any {
+func makeMeta(opts metaOpts) map[string]any {
 	m := map[string]any{
-		"Type":    typ,
-		"Default": defalt,
+		MetaKeyType:    opts.Type,
+		MetaKeyDefault: opts.Default,
 	}
 
-	if !f.HideTypeHint {
+	if !opts.HideTypeHint {
 		tHintPre, tHintPost := "=", ""
-		if typ == "bool" {
+		if opts.Type == "bool" {
 			tHintPre, tHintPost = "[=", "]"
 		}
-		m["TypeHint"] = tHintPre + strings.ToUpper(typ) + tHintPost
+		m[MetaKeyTypeHint] = tHintPre + strings.ToUpper(opts.Type) + tHintPost
 	}
 
-	if !f.HideDefaultHint {
+	if !opts.HideDefaultHint {
 		var dHint string
-		if defalt != "" {
-			dHint = "default: " + defalt
+		if opts.Default != "" {
+			dHint = defaultPrefix + opts.Default
 		}
-		m["DefaultHint"] = dHint
+		m[MetaKeyDefaultHint] = dHint
 	}
 
 	return m

@@ -152,6 +152,8 @@ func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {
 		fs.StringVar(v, flagName, *v, usage)
 	case *bool:
 		fs.BoolVar(v, flagName, *v, usage)
+	case *int:
+		fs.IntVar(v, flagName, *v, usage)
 	}
 }
 

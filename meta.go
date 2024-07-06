@@ -1,6 +1,8 @@
 package flagset
 
-import "strings"
+import (
+	"strings"
+)
 
 var (
 	MetaKeyType        = "Type"
@@ -26,11 +28,15 @@ func makeMeta(opts metaOpts) map[string]any {
 	}
 
 	if !opts.HideTypeHint {
-		tHintPre, tHintPost := "=", ""
-		if opts.Type == "bool" {
-			tHintPre, tHintPost = "[=", "]"
+		var tHint string
+		if opts.Type != "" {
+			tHintPre, tHintPost := "=", ""
+			if opts.Type == "bool" {
+				tHintPre, tHintPost = "[=", "]"
+			}
+			tHint = tHintPre + strings.ToUpper(opts.Type) + tHintPost
 		}
-		m[MetaKeyTypeHint] = tHintPre + strings.ToUpper(opts.Type) + tHintPost
+		m[MetaKeyTypeHint] = tHint
 	}
 
 	if !opts.HideDefaultHint {

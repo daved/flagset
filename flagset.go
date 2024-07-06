@@ -1,12 +1,14 @@
 package flagset
 
 import (
+	"encoding"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"reflect"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -98,11 +100,18 @@ func (fs *FlagSet) Opt(val any, names, usage string) *Opt {
 		addOptTo(fs.fs, val, short, usage)
 	}
 
-	v := reflect.ValueOf(val).Elem()
-	t := v.Type().Name()
-	def := fmt.Sprintf("%v", v)
+	if reflect.ValueOf(val).Kind() == reflect.Func {
+		vto := reflect.TypeOf(val)
+		errIface := reflect.TypeOf((*error)(nil)).Elem()
+		if vto.In(0).Kind() == reflect.String && vto.Out(0).Implements(errIface) {
+			val = OptFunc(val.(func(string) error))
+		}
+	}
 
-	opt := makeOpt(fs, names, longs, shorts, t, def, usage)
+	typName := typeName(val)
+	defTxt := defaultText(val)
+
+	opt := makeOpt(fs, names, longs, shorts, typName, defTxt, usage)
 	fs.opts = append(fs.opts, opt)
 
 	return &opt
@@ -146,6 +155,13 @@ func longsAndShorts(flags string) (longs, shorts []string) {
 	return longs, shorts
 }
 
+type TextMarshalUnmarshaler interface {
+	encoding.TextUnmarshaler
+	encoding.TextMarshaler
+}
+
+type OptFunc func(string) error
+
 func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {
 	switch v := val.(type) {
 	case *string:
@@ -154,6 +170,52 @@ func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {
 		fs.BoolVar(v, flagName, *v, usage)
 	case *int:
 		fs.IntVar(v, flagName, *v, usage)
+	case *int64:
+		fs.Int64Var(v, flagName, *v, usage)
+	case *uint:
+		fs.UintVar(v, flagName, *v, usage)
+	case *uint64:
+		fs.Uint64Var(v, flagName, *v, usage)
+	case *float64:
+		fs.Float64Var(v, flagName, *v, usage)
+	case *time.Duration:
+		fs.DurationVar(v, flagName, *v, usage)
+	case TextMarshalUnmarshaler:
+		fs.TextVar(v, flagName, v, usage)
+	case flag.Value:
+		fs.Var(v, flagName, usage)
+	case OptFunc:
+		fs.Func(flagName, usage, v)
+	}
+}
+
+func typeName(val any) string {
+	switch val.(type) {
+	case TextMarshalUnmarshaler, OptFunc:
+		return ""
+	case flag.Value:
+		return "value"
+	default:
+		v := reflect.ValueOf(val)
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		return v.Type().Name()
+	}
+}
+
+func defaultText(val any) string {
+	switch v := val.(type) {
+	case TextMarshalUnmarshaler, OptFunc:
+		return ""
+	case fmt.Stringer:
+		return v.String()
+	default:
+		vo := reflect.ValueOf(val)
+		if vo.Kind() == reflect.Ptr {
+			vo = vo.Elem()
+		}
+		return fmt.Sprint(vo)
 	}
 }
 

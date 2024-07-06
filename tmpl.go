@@ -20,7 +20,7 @@ Flags for {{.Name}}:
   {{if .}}  {{end}}{{if $opt.Shorts}}-{{Join $opt.Shorts ", -"}}{{end}}
   {{- if and $opt.Shorts $opt.Longs}}, {{end}}
   {{- if $opt.Longs}}--{{Join $opt.Longs ", --"}}{{end}}
-  {{- if $opt.Meta.TypeHint}}  {{end}}{{$opt.Meta.TypeHint}}
+  {{- if $opt.Meta.TypeHint}}  {{$opt.Meta.TypeHint}}{{end}}
   {{- if $opt.Meta.DefaultHint}}    {{$opt.Meta.DefaultHint}}{{end}}
         {{$opt.Usage}}
 {{end}}

@@ -160,6 +160,8 @@ type TextMarshalUnmarshaler interface {
 	encoding.TextMarshaler
 }
 
+type FlagValue = flag.Value
+
 type OptFunc func(string) error
 
 func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {

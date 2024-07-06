@@ -25,12 +25,11 @@ func Example() {
 		return
 	}
 
-	fmt.Printf("Flag Vals:\nHelp: %t, Info: %s, Num: %d\n", help, info, num)
+	fmt.Printf("Help: %t, Info: %s, Num: %d\n", help, info, num)
 	fmt.Println()
 	fmt.Println(fs.Usage())
 
 	// Output:
-	// Flag Vals:
 	// Help: true, Info: non-default, Num: 42
 	//
 	// Flags for app:
@@ -40,4 +39,45 @@ func Example() {
 	//
 	//     -i, --info  =STRING    default: default-value
 	//         Info to use.
+}
+
+type Data struct {
+	val string
+}
+
+func (d *Data) String() string {
+	return d.val
+}
+
+func (d *Data) Set(s string) error {
+	d.val = s
+	return nil
+}
+
+func ExampleFlagValue() {
+	var (
+		d = &Data{val: "default-value"} // Data implements the flag.Value interface
+	)
+
+	fs := flagset.New("app")
+	fs.Opt(d, "data|d", "Data to use.")
+
+	args := []string{"--data=example"}
+
+	if err := fs.Parse(args); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Printf("Data: %s\n", d)
+	fmt.Println()
+	fmt.Println(fs.Usage())
+
+	// Output:
+	// Data: example
+	//
+	// Flags for app:
+	//
+	//     -d, --data  =VALUE    default: default-value
+	//         Data to use.
 }

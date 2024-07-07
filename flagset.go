@@ -19,9 +19,10 @@ import (
 
 // FlagSet contains flag options and related information used for usage output.
 type FlagSet struct {
-	fs     *flag.FlagSet
-	opts   []Opt
-	parsed []string
+	fs      *flag.FlagSet
+	opts    []Opt
+	parsed  []string
+	tmplTxt string
 
 	HideTypeHint    bool
 	HideDefaultHint bool
@@ -34,7 +35,8 @@ func New(name string) *FlagSet {
 	fs.SetOutput(io.Discard)
 
 	return &FlagSet{
-		fs: fs,
+		fs:      fs,
+		tmplTxt: tmplText,
 	}
 }
 
@@ -78,6 +80,13 @@ func (fs *FlagSet) NFlag() int {
 // Name returns the name of the FlagSet set during construction.
 func (fs *FlagSet) Name() string {
 	return fs.fs.Name()
+}
+
+// SetUsageTemplate allows callers to override the base template text. If more
+// advanced behavior is desired, consider wrapping the FlagSet type and
+// designing a custom Usage method.
+func (fs *FlagSet) SetUsageTemplate(txt string) {
+	fs.tmplTxt = txt
 }
 
 // Parse parses flag definitions from the argument list, which should not

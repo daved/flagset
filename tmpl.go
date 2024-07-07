@@ -46,7 +46,7 @@ func (fs *FlagSet) Usage() string {
 
 	buf := &bytes.Buffer{}
 
-	tmpl, err := tmpl.Parse(tmplText)
+	tmpl, err := tmpl.Parse(fs.tmplTxt)
 	if err != nil {
 		fmt.Fprintf(buf, "flagset: template error: %v\n", err)
 		return buf.String()

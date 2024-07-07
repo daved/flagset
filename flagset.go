@@ -117,7 +117,8 @@ func (fs *FlagSet) Parse(arguments []string) error {
 // Valid values are: *string, *bool, *int, *int64, *uint, *uint64, *float64,
 // *time.Duration, TextMarshalUnmarshaler, flag.Value, OptFunc
 // Names can include multiple long and multiple short values. Each value should
-// be separated by a pipe (|) character.
+// be separated by a pipe (|) character. If val has a usable non-zero value, it
+// will be used as the default value for that flag option.
 func (fs *FlagSet) Opt(val any, names, usage string) *Opt {
 	if reflect.ValueOf(val).Kind() == reflect.Func {
 		vto := reflect.TypeOf(val)

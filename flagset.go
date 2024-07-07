@@ -90,6 +90,14 @@ func (fs *FlagSet) VisitAll(fn func(*flag.Flag)) {
 }
 
 func (fs *FlagSet) Opt(val any, names, usage string) *Opt {
+	if reflect.ValueOf(val).Kind() == reflect.Func {
+		vto := reflect.TypeOf(val)
+		errIface := reflect.TypeOf((*error)(nil)).Elem()
+		if vto.In(0).Kind() == reflect.String && vto.Out(0).Implements(errIface) {
+			val = OptFunc(val.(func(string) error))
+		}
+	}
+
 	longs, shorts := longsAndShorts(names)
 
 	for _, long := range longs {
@@ -98,14 +106,6 @@ func (fs *FlagSet) Opt(val any, names, usage string) *Opt {
 
 	for _, short := range shorts {
 		addOptTo(fs.fs, val, short, usage)
-	}
-
-	if reflect.ValueOf(val).Kind() == reflect.Func {
-		vto := reflect.TypeOf(val)
-		errIface := reflect.TypeOf((*error)(nil)).Elem()
-		if vto.In(0).Kind() == reflect.String && vto.Out(0).Implements(errIface) {
-			val = OptFunc(val.(func(string) error))
-		}
 	}
 
 	typName := typeName(val)
@@ -193,9 +193,7 @@ func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {
 
 func typeName(val any) string {
 	switch val.(type) {
-	case TextMarshalUnmarshaler, OptFunc:
-		return ""
-	case flag.Value:
+	case OptFunc, TextMarshalUnmarshaler, flag.Value:
 		return "value"
 	default:
 		v := reflect.ValueOf(val)
@@ -208,7 +206,13 @@ func typeName(val any) string {
 
 func defaultText(val any) string {
 	switch v := val.(type) {
-	case TextMarshalUnmarshaler, OptFunc:
+	case TextMarshalUnmarshaler:
+		t, err := v.MarshalText()
+		if err != nil {
+			t = []byte(err.Error())
+		}
+		return string(t)
+	case OptFunc:
 		return ""
 	case fmt.Stringer:
 		return v.String()

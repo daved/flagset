@@ -28,6 +28,10 @@ Flags for {{.Name}}:
 {{- end}}
 `)
 
+// Usage returns the parsed usage template. Each Opt type's Meta field is
+// leveraged to convey detailed info/behavior. This method and related template
+// can be used as an example for callers to wrap the FlagSet type and design
+// their own usage output. For example, grouping, sorting, etc.
 func (fs *FlagSet) Usage() string {
 	data := &tmplData{
 		Name: fs.Name(),

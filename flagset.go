@@ -1,3 +1,8 @@
+// Package flagset wraps the standard library flag package and focuses on the
+// flag.FlagSet type. This is done to simplify usage, and to add handling for
+// single hyphen (e.g -h) and double hyphen (e.g. --help) flags. Specifically,
+// single hyphen prefixed values with multiple characters are exploded out as
+// though they were their own flag (e.g. -abc = -a -b -c).
 package flagset
 
 import (
@@ -12,6 +17,7 @@ import (
 	"unicode/utf8"
 )
 
+// FlagSet contains flag options and related information used for usage output.
 type FlagSet struct {
 	fs     *flag.FlagSet
 	opts   []Opt
@@ -21,6 +27,8 @@ type FlagSet struct {
 	HideDefaultHint bool
 }
 
+// New constructs a FlagSet. In this package, it is conventional to name the
+// flagset after the command that the options are being associated with.
 func New(name string) *FlagSet {
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -30,38 +38,53 @@ func New(name string) *FlagSet {
 	}
 }
 
+// Opts returns all flag options that have been set.
 func (fs *FlagSet) Opts() []Opt {
 	return fs.opts
 }
 
+// Parsed returns the args provided when Parse was called with any single hyphen
+// flags containing multiple characters exploded to their own entries. The
+// returned value can be helpful for debugging.
 func (fs *FlagSet) Parsed() []string {
 	return fs.parsed
 }
 
+// Arg returns the i'th argument. Arg(0) is the first remaining argument after
+// flags have been processed. Arg returns an empty string if the requested
+// element does not exist. This value is determined after single hyphen flags
+// with multiple characters have been exploded.
 func (fs *FlagSet) Arg(i int) string {
 	return fs.fs.Arg(i)
 }
 
+// Args returns the non-flag arguments.
 func (fs *FlagSet) Args() []string {
 	return fs.fs.Args()
 }
 
-func (fs *FlagSet) Lookup(name string) *flag.Flag {
-	return fs.fs.Lookup(name)
-}
-
+// NArg is the number of arguments remaining after flags have been processed.
 func (fs *FlagSet) NArg() int {
 	return fs.fs.NArg()
 }
 
+// NFlag returns the number of command-line flags that have been set. This
+// value is determined after single hyphen flags with multiple characters have
+// been exploded.
 func (fs *FlagSet) NFlag() int {
 	return fs.fs.NFlag()
 }
 
+// Name returns the name of the FlagSet set during construction.
 func (fs *FlagSet) Name() string {
 	return fs.fs.Name()
 }
 
+// Parse parses flag definitions from the argument list, which should not
+// include the command name. Must be called after all flags in the FlagSet are
+// defined and before flags are accessed by the program. Before parsing occurs,
+// all single hyphen flags with multiple characters are exploded out as though
+// they were their own flag (e.g. -abc = -a -b -c).
 func (fs *FlagSet) Parse(arguments []string) error {
 	fs.parsed = explodeShortArgs(arguments)
 
@@ -81,14 +104,11 @@ func (fs *FlagSet) Parse(arguments []string) error {
 	return nil
 }
 
-func (fs *FlagSet) Visit(fn func(*flag.Flag)) {
-	fs.fs.Visit(fn)
-}
-
-func (fs *FlagSet) VisitAll(fn func(*flag.Flag)) {
-	fs.fs.VisitAll(fn)
-}
-
+// Opt adds a flag option to the FlagSet.
+// Valid values are: *string, *bool, *int, *int64, *uint, *uint64, *float64,
+// *time.Duration, TextMarshalUnmarshaler, flag.Value, OptFunc
+// Names can include multiple long and multiple short values. Each value should
+// be separated by a pipe (|) character.
 func (fs *FlagSet) Opt(val any, names, usage string) *Opt {
 	if reflect.ValueOf(val).Kind() == reflect.Func {
 		vto := reflect.TypeOf(val)
@@ -155,13 +175,18 @@ func longsAndShorts(flags string) (longs, shorts []string) {
 	return longs, shorts
 }
 
+// TextMarshalUnmarshaler descibes types that are able to be marshaled to and
+// unmarshaled from text.
 type TextMarshalUnmarshaler interface {
 	encoding.TextUnmarshaler
 	encoding.TextMarshaler
 }
 
+// FlagValue is an alias for flag.Value and provided for visibility.
 type FlagValue = flag.Value
 
+// OptFunc describes functions that can be called when a flag option is
+// succesfully parsed.
 type OptFunc func(string) error
 
 func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {
@@ -188,40 +213,6 @@ func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {
 		fs.Var(v, flagName, usage)
 	case OptFunc:
 		fs.Func(flagName, usage, v)
-	}
-}
-
-func typeName(val any) string {
-	switch val.(type) {
-	case OptFunc, TextMarshalUnmarshaler, flag.Value:
-		return "value"
-	default:
-		v := reflect.ValueOf(val)
-		if v.Kind() == reflect.Ptr {
-			v = v.Elem()
-		}
-		return v.Type().Name()
-	}
-}
-
-func defaultText(val any) string {
-	switch v := val.(type) {
-	case TextMarshalUnmarshaler:
-		t, err := v.MarshalText()
-		if err != nil {
-			t = []byte(err.Error())
-		}
-		return string(t)
-	case OptFunc:
-		return ""
-	case fmt.Stringer:
-		return v.String()
-	default:
-		vo := reflect.ValueOf(val)
-		if vo.Kind() == reflect.Ptr {
-			vo = vo.Elem()
-		}
-		return fmt.Sprint(vo)
 	}
 }
 

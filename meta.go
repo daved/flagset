@@ -4,7 +4,9 @@ import (
 	"strings"
 )
 
-var (
+// MetaKey constants document which keys can be used in an Opt Meta map that
+// are leveraged by this package's usage template.
+const (
 	MetaKeyType        = "Type"
 	MetaKeyDefault     = "Default"
 	MetaKeySkipUsage   = "SkipUsage"

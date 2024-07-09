@@ -82,9 +82,7 @@ func (fs *FlagSet) Name() string {
 	return fs.fs.Name()
 }
 
-// SetUsageTemplate allows callers to override the base template text. If more
-// advanced behavior is desired, consider wrapping the FlagSet type and
-// designing a custom Usage method.
+// SetUsageTemplate allows callers to override the base template text.
 func (fs *FlagSet) SetUsageTemplate(txt string) {
 	fs.tmplTxt = txt
 }

@@ -21,8 +21,8 @@ type Opt struct {
 
 func makeOpt(fs *FlagSet, ns string, ls, ss []string, t, d, u string) Opt {
 	m := makeMeta(metaOpts{
-		HideTypeHint:    fs.HideTypeHint,
-		HideDefaultHint: fs.HideDefaultHint,
+		HideTypeHint:    fs.MetaHideTypeHints,
+		HideDefaultHint: fs.MetaHideDefaultHints,
 		Type:            t,
 		Default:         d,
 	})

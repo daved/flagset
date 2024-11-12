@@ -24,8 +24,8 @@ type FlagSet struct {
 	parsed  []string
 	tmplTxt string
 
-	HideTypeHint    bool
-	HideDefaultHint bool
+	MetaHideTypeHints    bool
+	MetaHideDefaultHints bool
 }
 
 // New constructs a FlagSet. In this package, it is conventional to name the
@@ -104,8 +104,6 @@ func (fs *FlagSet) Parse(arguments []string) error {
 			err = fmt.Errorf("flagset: parse: flag provided but not defined: %s", h)
 			return mayWrapNotDefined(err)
 		}
-
-		return nil
 	}
 
 	return nil

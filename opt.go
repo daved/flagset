@@ -70,7 +70,7 @@ func (o Opt) Usage() string {
 
 func typeName(val any) string {
 	switch val.(type) {
-	case OptFunc, TextMarshalUnmarshaler, flag.Value:
+	case OptFunc, OptBoolFunc, TextMarshalUnmarshaler, flag.Value:
 		return "value"
 	default:
 		v := reflect.ValueOf(val)
@@ -89,7 +89,7 @@ func defaultText(val any) string {
 			t = []byte(err.Error())
 		}
 		return string(t)
-	case OptFunc:
+	case OptFunc, OptBoolFunc:
 		return ""
 	case fmt.Stringer:
 		return v.String()

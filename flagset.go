@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -122,6 +123,9 @@ func (fs *FlagSet) Opt(val any, names, usage string) *Opt {
 		if vto.In(0).Kind() == reflect.String && vto.Out(0).Implements(errIface) {
 			val = OptFunc(val.(func(string) error))
 		}
+		if vto.In(0).Kind() == reflect.Bool && vto.Out(0).Implements(errIface) {
+			val = OptBoolFunc(val.(func(bool) error))
+		}
 	}
 
 	longs, shorts := longsAndShorts(names)
@@ -192,8 +196,14 @@ type TextMarshalUnmarshaler interface {
 type FlagValue = flag.Value
 
 // OptFunc describes functions that can be called when a flag option is
-// succesfully parsed.
+// succesfully parsed. Currently, this cannot pass errors values back to callers
+// as the stdlib flag pkg eats them.
 type OptFunc func(string) error
+
+// OptBoolFunc describes functions that can be called when a bool flag option
+// is succesfully parsed. Currently, this cannot pass errors values back to
+// callers as the stdlib flag pkg eats them.
+type OptBoolFunc func(bool) error
 
 func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {
 	switch v := val.(type) {
@@ -219,6 +229,15 @@ func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {
 		fs.Var(v, flagName, usage)
 	case OptFunc:
 		fs.Func(flagName, usage, v)
+	case OptBoolFunc:
+		fn := func(s string) error {
+			b, err := strconv.ParseBool(s)
+			if err != nil {
+				return err
+			}
+			return v(b)
+		}
+		fs.BoolFunc(flagName, usage, fn)
 	}
 }
 

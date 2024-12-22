@@ -6,14 +6,14 @@ import (
 	"github.com/daved/flagset"
 )
 
-func ExampleOptFunc() {
+func ExampleFlagFunc() {
 	do := func(flagVal string) error {
 		fmt.Println("Flag Value:", flagVal)
 		return nil
 	}
 
 	fs := flagset.New("app")
-	fs.Opt(do, "do|d", "Run 'do'.")
+	fs.Flag(do, "do|d", "Run 'do'.")
 
 	args := []string{"--do=something"}
 

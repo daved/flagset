@@ -6,10 +6,10 @@ import (
 	"reflect"
 )
 
-// Opt manages flag option data. The fields are mostly unexposed to emphasize
+// Flag manages flag option data. The fields are mostly unexposed to emphasize
 // that the fields should not be modified unexpectedly. It is appropriate to
 // modify the Meta map to communicate info/behavior to the usage template.
-type Opt struct {
+type Flag struct {
 	names  string
 	longs  []string
 	shorts []string
@@ -19,7 +19,7 @@ type Opt struct {
 	Meta   map[string]any
 }
 
-func makeOpt(fs *FlagSet, ns string, ls, ss []string, t, d, u string) Opt {
+func makeFlag(fs *FlagSet, ns string, ls, ss []string, t, d, u string) Flag {
 	m := makeMeta(metaOpts{
 		HideTypeHint:    fs.MetaHideTypeHints,
 		HideDefaultHint: fs.MetaHideDefaultHints,
@@ -27,7 +27,7 @@ func makeOpt(fs *FlagSet, ns string, ls, ss []string, t, d, u string) Opt {
 		Default:         d,
 	})
 
-	return Opt{
+	return Flag{
 		names:  ns,
 		longs:  ls,
 		shorts: ss,
@@ -39,38 +39,38 @@ func makeOpt(fs *FlagSet, ns string, ls, ss []string, t, d, u string) Opt {
 }
 
 // Names returns a string of the defined flag names.
-func (o Opt) Names() string {
-	return o.names
+func (f Flag) Names() string {
+	return f.names
 }
 
 // Longs returns all long flag names.
-func (o Opt) Longs() []string {
-	return o.longs
+func (f Flag) Longs() []string {
+	return f.longs
 }
 
 // Shorts returns all short flag names.
-func (o Opt) Shorts() []string {
-	return o.shorts
+func (f Flag) Shorts() []string {
+	return f.shorts
 }
 
 // Type returns the flag value type name.
-func (o Opt) Type() string {
-	return o.typ
+func (f Flag) Type() string {
+	return f.typ
 }
 
 // Default returns the flag default value.
-func (o Opt) Default() string {
-	return o.defalt
+func (f Flag) Default() string {
+	return f.defalt
 }
 
 // Usage returns the usage string.
-func (o Opt) Usage() string {
-	return o.usage
+func (f Flag) Usage() string {
+	return f.usage
 }
 
 func typeName(val any) string {
 	switch val.(type) {
-	case OptFunc, OptBoolFunc, TextMarshalUnmarshaler, flag.Value:
+	case FlagFunc, FlagBoolFunc, TextMarshalUnmarshaler, flag.Value:
 		return "value"
 	default:
 		v := reflect.ValueOf(val)
@@ -89,7 +89,7 @@ func defaultText(val any) string {
 			t = []byte(err.Error())
 		}
 		return string(t)
-	case OptFunc, OptBoolFunc:
+	case FlagFunc, FlagBoolFunc:
 		return ""
 	case fmt.Stringer:
 		return v.String()

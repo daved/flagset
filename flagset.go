@@ -18,10 +18,12 @@ import (
 	"unicode/utf8"
 )
 
+// TODO: add sensible errors
+
 // FlagSet contains flag options and related information used for usage output.
 type FlagSet struct {
 	fs      *flag.FlagSet
-	opts    []Opt
+	flags   []Flag
 	parsed  []string
 	tmplTxt string
 
@@ -41,9 +43,9 @@ func New(name string) *FlagSet {
 	}
 }
 
-// Opts returns all flag options that have been set.
-func (fs *FlagSet) Opts() []Opt {
-	return fs.opts
+// Flags returns all flag options that have been set.
+func (fs *FlagSet) Flags() []Flag {
+	return fs.flags
 }
 
 // Parsed returns the args provided when Parse was called with any single hyphen
@@ -110,41 +112,41 @@ func (fs *FlagSet) Parse(arguments []string) error {
 	return nil
 }
 
-// Opt adds a flag option to the FlagSet.
+// Flag adds a flag option to the FlagSet.
 // Valid values are: *string, *bool, *int, *int64, *uint, *uint64, *float64,
-// *time.Duration, TextMarshalUnmarshaler, flag.Value, OptFunc
+// *time.Duration, TextMarshalUnmarshaler, flag.Value, FlagFunc
 // Names can include multiple long and multiple short values. Each value should
 // be separated by a pipe (|) character. If val has a usable non-zero value, it
 // will be used as the default value for that flag option.
-func (fs *FlagSet) Opt(val any, names, usage string) *Opt {
+func (fs *FlagSet) Flag(val any, names, usage string) *Flag {
 	if reflect.ValueOf(val).Kind() == reflect.Func {
 		vto := reflect.TypeOf(val)
 		errIface := reflect.TypeOf((*error)(nil)).Elem()
 		if vto.In(0).Kind() == reflect.String && vto.Out(0).Implements(errIface) {
-			val = OptFunc(val.(func(string) error))
+			val = FlagFunc(val.(func(string) error))
 		}
 		if vto.In(0).Kind() == reflect.Bool && vto.Out(0).Implements(errIface) {
-			val = OptBoolFunc(val.(func(bool) error))
+			val = FlagBoolFunc(val.(func(bool) error))
 		}
 	}
 
 	longs, shorts := longsAndShorts(names)
 
 	for _, long := range longs {
-		addOptTo(fs.fs, val, long, usage)
+		addFlagTo(fs.fs, val, long, usage)
 	}
 
 	for _, short := range shorts {
-		addOptTo(fs.fs, val, short, usage)
+		addFlagTo(fs.fs, val, short, usage)
 	}
 
 	typName := typeName(val)
 	defTxt := defaultText(val)
 
-	opt := makeOpt(fs, names, longs, shorts, typName, defTxt, usage)
-	fs.opts = append(fs.opts, opt)
+	flag := makeFlag(fs, names, longs, shorts, typName, defTxt, usage)
+	fs.flags = append(fs.flags, flag)
 
-	return &opt
+	return &flag
 }
 
 func explodeShortArgs(args []string) []string {
@@ -195,17 +197,17 @@ type TextMarshalUnmarshaler interface {
 // FlagValue is an alias for flag.Value and provided for visibility.
 type FlagValue = flag.Value
 
-// OptFunc describes functions that can be called when a flag option is
+// FlagFunc describes functions that can be called when a flag option is
 // succesfully parsed. Currently, this cannot pass errors values back to callers
 // as the stdlib flag pkg eats them.
-type OptFunc func(string) error
+type FlagFunc func(string) error
 
-// OptBoolFunc describes functions that can be called when a bool flag option
+// FlagBoolFunc describes functions that can be called when a bool flag option
 // is succesfully parsed. Currently, this cannot pass errors values back to
 // callers as the stdlib flag pkg eats them.
-type OptBoolFunc func(bool) error
+type FlagBoolFunc func(bool) error
 
-func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {
+func addFlagTo(fs *flag.FlagSet, val any, flagName, usage string) {
 	switch v := val.(type) {
 	case *string:
 		fs.StringVar(v, flagName, *v, usage)
@@ -227,9 +229,9 @@ func addOptTo(fs *flag.FlagSet, val any, flagName, usage string) {
 		fs.TextVar(v, flagName, v, usage)
 	case flag.Value:
 		fs.Var(v, flagName, usage)
-	case OptFunc:
+	case FlagFunc:
 		fs.Func(flagName, usage, v)
-	case OptBoolFunc:
+	case FlagBoolFunc:
 		fn := func(s string) error {
 			b, err := strconv.ParseBool(s)
 			if err != nil {

@@ -28,12 +28,10 @@ func (v URLValue) Set(s string) error {
 }
 
 func ExampleFlagValue() {
-	var (
-		url = URLValue{&url.URL{}}
-	)
+	url := URLValue{&url.URL{}}
 
 	fs := flagset.New("app")
-	fs.Opt(url, "url|u", "URL to use.")
+	fs.Flag(url, "url|u", "URL to use.")
 
 	args := []string{"--url=https://example.com"}
 

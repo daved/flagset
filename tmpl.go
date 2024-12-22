@@ -8,34 +8,34 @@ import (
 )
 
 type tmplData struct {
-	Name string
-	Opts []Opt
+	Name  string
+	Flags []Flag
 }
 
 var tmplText = strings.TrimSpace(`
-{{- if .Opts -}}
+{{- if .Flags -}}
 Flags for {{.Name}}:
-{{range $i, $opt := .Opts}}
-  {{- if $opt.Meta.SkipUsage}}{{continue}}{{end}}
-  {{if .}}  {{end}}{{if $opt.Shorts}}-{{Join $opt.Shorts ", -"}}{{end}}
-  {{- if and $opt.Shorts $opt.Longs}}, {{end}}
-  {{- if $opt.Longs}}--{{Join $opt.Longs ", --"}}{{end}}
-  {{- if $opt.Meta.TypeHint}}  {{$opt.Meta.TypeHint}}{{end}}
-  {{- if $opt.Meta.DefaultHint}}    {{$opt.Meta.DefaultHint}}{{end}}
-        {{$opt.Usage}}
+{{range $i, $flag := .Flags}}
+  {{- if $flag.Meta.SkipUsage}}{{continue}}{{end}}
+  {{if .}}  {{end}}{{if $flag.Shorts}}-{{Join $flag.Shorts ", -"}}{{end}}
+  {{- if and $flag.Shorts $flag.Longs}}, {{end}}
+  {{- if $flag.Longs}}--{{Join $flag.Longs ", --"}}{{end}}
+  {{- if $flag.Meta.TypeHint}}  {{$flag.Meta.TypeHint}}{{end}}
+  {{- if $flag.Meta.DefaultHint}}    {{$flag.Meta.DefaultHint}}{{end}}
+        {{$flag.Usage}}
 {{end}}
 {{else}}
 {{- end}}
 `)
 
-// Usage returns the parsed usage template. Each Opt type's Meta field is
+// Usage returns the parsed usage template. Each Flag type's Meta field is
 // leveraged to convey detailed info/behavior. This method and related template
 // can be used as an example for callers to wrap the FlagSet type and design
 // their own usage output. For example, grouping, sorting, etc.
 func (fs *FlagSet) Usage() string {
 	data := &tmplData{
-		Name: fs.Name(),
-		Opts: fs.Opts(),
+		Name:  fs.Name(),
+		Flags: fs.Flags(),
 	}
 
 	tmpl := template.New("flagset").Funcs(

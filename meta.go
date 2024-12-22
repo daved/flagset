@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-// MetaKey constants document which keys can be used in an Opt Meta map that
+// MetaKey constants document which keys can be used in an Flag Meta map that
 // are leveraged by this package's usage template.
 const (
 	MetaKeyType        = "Type"

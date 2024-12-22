@@ -44,12 +44,10 @@ func (c *Color) UnmarshalText(text []byte) error {
 }
 
 func ExampleTextMarshalUnmarshaler() {
-	var (
-		c = Red
-	)
+	c := Red
 
 	fs := flagset.New("app")
-	fs.Opt(&c, "color|c", "Color to use.")
+	fs.Flag(&c, "color|c", "Color to use.")
 
 	args := []string{"--color=green"}
 

@@ -14,9 +14,9 @@ func Example() {
 	)
 
 	fs := flagset.New("app")
-	fs.Opt(&help, "help|h", "Display help output.")
-	fs.Opt(&info, "info|i", "Info to use.")
-	fs.Opt(&num, "num|n", "Number with no usage.").Meta[flagset.MetaKeySkipUsage] = true
+	fs.Flag(&help, "help|h", "Display help output.")
+	fs.Flag(&info, "info|i", "Info to use.")
+	fs.Flag(&num, "num|n", "Number with no usage.").Meta[flagset.MetaKeySkipUsage] = true
 
 	args := []string{"-h", "--info=non-default", "-n", "42"}
 

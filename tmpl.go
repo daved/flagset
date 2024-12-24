@@ -28,6 +28,17 @@ Flags for {{.Name}}:
 {{- end}}
 `)
 
+// SetUsageTemplate allows callers to override the base template text.
+func (fs *FlagSet) SetUsageTemplate(txt string) {
+	fs.tmplTxt = txt
+}
+
+func (fs *FlagSet) UpdateUsageFuncMap(m template.FuncMap) {
+	for k, v := range m {
+		fs.tmplFuncMap[k] = v
+	}
+}
+
 // Usage returns the parsed usage template. Each Flag type's Meta field is
 // leveraged to convey detailed info/behavior. This method and related template
 // can be used as an example for callers to wrap the FlagSet type and design
@@ -38,11 +49,7 @@ func (fs *FlagSet) Usage() string {
 		Flags: fs.Flags(),
 	}
 
-	tmpl := template.New("flagset").Funcs(
-		template.FuncMap{
-			"Join": strings.Join,
-		},
-	)
+	tmpl := template.New("flagset").Funcs(fs.tmplFuncMap)
 
 	buf := &bytes.Buffer{}
 

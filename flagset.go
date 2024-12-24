@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 	"unicode/utf8"
 )
@@ -22,10 +23,12 @@ import (
 
 // FlagSet contains flag options and related information used for usage output.
 type FlagSet struct {
-	fs      *flag.FlagSet
-	flags   []*Flag
-	parsed  []string
-	tmplTxt string
+	fs     *flag.FlagSet
+	flags  []*Flag
+	parsed []string
+
+	tmplFuncMap template.FuncMap
+	tmplTxt     string
 
 	HideTypeHints    bool
 	HideDefaultHints bool
@@ -39,7 +42,10 @@ func New(name string) *FlagSet {
 	fs.SetOutput(io.Discard)
 
 	return &FlagSet{
-		fs:      fs,
+		fs: fs,
+		tmplFuncMap: template.FuncMap{
+			"Join": strings.Join,
+		},
 		tmplTxt: tmplText,
 		Meta:    map[string]any{},
 	}
@@ -85,11 +91,6 @@ func (fs *FlagSet) NFlag() int {
 // Name returns the name of the FlagSet set during construction.
 func (fs *FlagSet) Name() string {
 	return fs.fs.Name()
-}
-
-// SetUsageTemplate allows callers to override the base template text.
-func (fs *FlagSet) SetUsageTemplate(txt string) {
-	fs.tmplTxt = txt
 }
 
 // Parse parses flag definitions from the argument list, which should not

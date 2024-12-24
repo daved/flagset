@@ -120,7 +120,7 @@ func (fs *FlagSet) Parse(arguments []string) error {
 // Names can include multiple long and multiple short values. Each value should
 // be separated by a pipe (|) character. If val has a usable non-zero value, it
 // will be used as the default value for that flag option.
-func (fs *FlagSet) Flag(val any, names, usage string) *Flag {
+func (fs *FlagSet) Flag(val any, names, desc string) *Flag {
 	if reflect.ValueOf(val).Kind() == reflect.Func {
 		vto := reflect.TypeOf(val)
 		errIface := reflect.TypeOf((*error)(nil)).Elem()
@@ -135,14 +135,14 @@ func (fs *FlagSet) Flag(val any, names, usage string) *Flag {
 	longs, shorts := longsAndShorts(names)
 
 	for _, long := range longs {
-		addFlagTo(fs.fs, val, long, usage)
+		addFlagTo(fs.fs, val, long, desc)
 	}
 
 	for _, short := range shorts {
-		addFlagTo(fs.fs, val, short, usage)
+		addFlagTo(fs.fs, val, short, desc)
 	}
 
-	flag := newFlag(val, longs, shorts, usage)
+	flag := newFlag(val, longs, shorts, desc)
 	fs.flags = append(fs.flags, flag)
 
 	return flag
@@ -203,30 +203,30 @@ type FlagFunc func(string) error
 // callers as the stdlib flag pkg eats them.
 type FlagBoolFunc func(bool) error
 
-func addFlagTo(fs *flag.FlagSet, val any, flagName, usage string) {
+func addFlagTo(fs *flag.FlagSet, val any, flagName, desc string) {
 	switch v := val.(type) {
 	case *string:
-		fs.StringVar(v, flagName, *v, usage)
+		fs.StringVar(v, flagName, *v, desc)
 	case *bool:
-		fs.BoolVar(v, flagName, *v, usage)
+		fs.BoolVar(v, flagName, *v, desc)
 	case *int:
-		fs.IntVar(v, flagName, *v, usage)
+		fs.IntVar(v, flagName, *v, desc)
 	case *int64:
-		fs.Int64Var(v, flagName, *v, usage)
+		fs.Int64Var(v, flagName, *v, desc)
 	case *uint:
-		fs.UintVar(v, flagName, *v, usage)
+		fs.UintVar(v, flagName, *v, desc)
 	case *uint64:
-		fs.Uint64Var(v, flagName, *v, usage)
+		fs.Uint64Var(v, flagName, *v, desc)
 	case *float64:
-		fs.Float64Var(v, flagName, *v, usage)
+		fs.Float64Var(v, flagName, *v, desc)
 	case *time.Duration:
-		fs.DurationVar(v, flagName, *v, usage)
+		fs.DurationVar(v, flagName, *v, desc)
 	case TextMarshalUnmarshaler:
-		fs.TextVar(v, flagName, v, usage)
+		fs.TextVar(v, flagName, v, desc)
 	case flag.Value:
-		fs.Var(v, flagName, usage)
+		fs.Var(v, flagName, desc)
 	case FlagFunc:
-		fs.Func(flagName, usage, v)
+		fs.Func(flagName, desc, v)
 	case FlagBoolFunc:
 		fn := func(s string) error {
 			if s == "" {
@@ -238,7 +238,7 @@ func addFlagTo(fs *flag.FlagSet, val any, flagName, usage string) {
 			}
 			return v(b)
 		}
-		fs.BoolFunc(flagName, usage, fn)
+		fs.BoolFunc(flagName, desc, fn)
 	}
 }
 

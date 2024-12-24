@@ -13,7 +13,7 @@ import (
 type Flag struct {
 	longs  []string
 	shorts []string
-	usage  string
+	desc   string
 
 	TypeHint    string
 	DefaultHint string
@@ -21,11 +21,11 @@ type Flag struct {
 	Meta        map[string]any
 }
 
-func newFlag(val any, ls, ss []string, u string) *Flag {
+func newFlag(val any, longs, shorts []string, desc string) *Flag {
 	return &Flag{
-		longs:       ls,
-		shorts:      ss,
-		usage:       u,
+		longs:       longs,
+		shorts:      shorts,
+		desc:        desc,
 		TypeHint:    typeName(val),
 		DefaultHint: defaultText(val),
 		Meta:        map[string]any{},
@@ -44,7 +44,7 @@ func (f Flag) Shorts() []string {
 
 // Usage returns the usage string.
 func (f Flag) Usage() string {
-	return f.usage
+	return f.desc
 }
 
 func typeName(val any) string {

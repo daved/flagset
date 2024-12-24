@@ -42,8 +42,8 @@ func (f Flag) Shorts() []string {
 	return f.shorts
 }
 
-// Usage returns the usage string.
-func (f Flag) Usage() string {
+// Description returns the description string.
+func (f Flag) Description() string {
 	return f.desc
 }
 

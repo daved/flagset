@@ -4,43 +4,32 @@ import (
 	"flag"
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 // Flag manages flag option data. The fields are mostly unexposed to emphasize
 // that the fields should not be modified unexpectedly. It is appropriate to
 // modify the Meta map to communicate info/behavior to the usage template.
 type Flag struct {
-	names  string
 	longs  []string
 	shorts []string
-	typ    string
-	defalt string
 	usage  string
-	Meta   map[string]any
+
+	TypeHint    string
+	DefaultHint string
+	HideUsage   bool
+	Meta        map[string]any
 }
 
-func makeFlag(fs *FlagSet, ns string, ls, ss []string, t, d, u string) Flag {
-	m := makeMeta(metaOpts{
-		HideTypeHint:    fs.MetaHideTypeHints,
-		HideDefaultHint: fs.MetaHideDefaultHints,
-		Type:            t,
-		Default:         d,
-	})
-
-	return Flag{
-		names:  ns,
-		longs:  ls,
-		shorts: ss,
-		typ:    t,
-		defalt: d,
-		usage:  u,
-		Meta:   m,
+func newFlag(val any, ls, ss []string, u string) *Flag {
+	return &Flag{
+		longs:       ls,
+		shorts:      ss,
+		usage:       u,
+		TypeHint:    typeName(val),
+		DefaultHint: defaultText(val),
+		Meta:        map[string]any{},
 	}
-}
-
-// Names returns a string of the defined flag names.
-func (f Flag) Names() string {
-	return f.names
 }
 
 // Longs returns all long flag names.
@@ -53,51 +42,66 @@ func (f Flag) Shorts() []string {
 	return f.shorts
 }
 
-// Type returns the flag value type name.
-func (f Flag) Type() string {
-	return f.typ
-}
-
-// Default returns the flag default value.
-func (f Flag) Default() string {
-	return f.defalt
-}
-
 // Usage returns the usage string.
 func (f Flag) Usage() string {
 	return f.usage
 }
 
 func typeName(val any) string {
+	var out string
+
 	switch val.(type) {
 	case FlagFunc, FlagBoolFunc, TextMarshalUnmarshaler, flag.Value:
-		return "value"
+		out = "value"
 	default:
 		v := reflect.ValueOf(val)
 		if v.Kind() == reflect.Ptr {
 			v = v.Elem()
 		}
-		return v.Type().Name()
+		out = v.Type().Name()
 	}
+
+	if out != "" {
+		pre, post := "=", ""
+
+		switch val.(type) {
+		case *bool, FlagBoolFunc:
+			pre, post = "[=", "]"
+		}
+
+		out = pre + strings.ToUpper(out) + post
+	}
+
+	return out
 }
 
+const defaultPrefix = "default: "
+
 func defaultText(val any) string {
+	var out string
+
 	switch v := val.(type) {
 	case TextMarshalUnmarshaler:
 		t, err := v.MarshalText()
 		if err != nil {
-			t = []byte(err.Error())
+			return err.Error()
 		}
-		return string(t)
+		out = string(t)
 	case FlagFunc, FlagBoolFunc:
-		return ""
+		out = ""
 	case fmt.Stringer:
-		return v.String()
+		out = v.String()
 	default:
 		vo := reflect.ValueOf(val)
 		if vo.Kind() == reflect.Ptr {
 			vo = vo.Elem()
 		}
-		return fmt.Sprint(vo)
+		out = fmt.Sprint(vo)
 	}
+
+	if out != "" {
+		out = defaultPrefix + out
+	}
+
+	return out
 }

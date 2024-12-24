@@ -23,12 +23,12 @@ import (
 // FlagSet contains flag options and related information used for usage output.
 type FlagSet struct {
 	fs      *flag.FlagSet
-	flags   []Flag
+	flags   []*Flag
 	parsed  []string
 	tmplTxt string
 
-	MetaHideTypeHints    bool
-	MetaHideDefaultHints bool
+	HideTypeHints    bool
+	HideDefaultHints bool
 }
 
 // New constructs a FlagSet. In this package, it is conventional to name the
@@ -44,7 +44,7 @@ func New(name string) *FlagSet {
 }
 
 // Flags returns all flag options that have been set.
-func (fs *FlagSet) Flags() []Flag {
+func (fs *FlagSet) Flags() []*Flag {
 	return fs.flags
 }
 
@@ -140,13 +140,10 @@ func (fs *FlagSet) Flag(val any, names, usage string) *Flag {
 		addFlagTo(fs.fs, val, short, usage)
 	}
 
-	typName := typeName(val)
-	defTxt := defaultText(val)
-
-	flag := makeFlag(fs, names, longs, shorts, typName, defTxt, usage)
+	flag := newFlag(val, longs, shorts, usage)
 	fs.flags = append(fs.flags, flag)
 
-	return &flag
+	return flag
 }
 
 func explodeShortArgs(args []string) []string {
@@ -194,9 +191,6 @@ type TextMarshalUnmarshaler interface {
 	encoding.TextMarshaler
 }
 
-// FlagValue is an alias for flag.Value and provided for visibility.
-type FlagValue = flag.Value
-
 // FlagFunc describes functions that can be called when a flag option is
 // succesfully parsed. Currently, this cannot pass errors values back to callers
 // as the stdlib flag pkg eats them.
@@ -233,6 +227,9 @@ func addFlagTo(fs *flag.FlagSet, val any, flagName, usage string) {
 		fs.Func(flagName, usage, v)
 	case FlagBoolFunc:
 		fn := func(s string) error {
+			if s == "" {
+				return v(true)
+			}
 			b, err := strconv.ParseBool(s)
 			if err != nil {
 				return err

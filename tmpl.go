@@ -9,19 +9,19 @@ import (
 
 type tmplData struct {
 	Name  string
-	Flags []Flag
+	Flags []*Flag
 }
 
 var tmplText = strings.TrimSpace(`
 {{- if .Flags -}}
 Flags for {{.Name}}:
 {{range $i, $flag := .Flags}}
-  {{- if $flag.Meta.SkipUsage}}{{continue}}{{end}}
+  {{- if $flag.HideUsage}}{{continue}}{{end}}
   {{if .}}  {{end}}{{if $flag.Shorts}}-{{Join $flag.Shorts ", -"}}{{end}}
   {{- if and $flag.Shorts $flag.Longs}}, {{end}}
   {{- if $flag.Longs}}--{{Join $flag.Longs ", --"}}{{end}}
-  {{- if $flag.Meta.TypeHint}}  {{$flag.Meta.TypeHint}}{{end}}
-  {{- if $flag.Meta.DefaultHint}}    {{$flag.Meta.DefaultHint}}{{end}}
+  {{- if $flag.TypeHint}}  {{$flag.TypeHint}}{{end}}
+  {{- if $flag.DefaultHint}}    {{$flag.DefaultHint}}{{end}}
         {{$flag.Usage}}
 {{end}}
 {{else}}

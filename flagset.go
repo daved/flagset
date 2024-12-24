@@ -29,6 +29,7 @@ type FlagSet struct {
 
 	HideTypeHints    bool
 	HideDefaultHints bool
+	Meta             map[string]any
 }
 
 // New constructs a FlagSet. In this package, it is conventional to name the
@@ -40,6 +41,7 @@ func New(name string) *FlagSet {
 	return &FlagSet{
 		fs:      fs,
 		tmplTxt: tmplText,
+		Meta:    map[string]any{},
 	}
 }
 

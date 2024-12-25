@@ -63,22 +63,17 @@ func (fs *FlagSet) Parsed() []string {
 	return fs.parsed
 }
 
-// Arg returns the i'th argument. Arg(0) is the first remaining argument after
-// flags have been processed. Arg returns an empty string if the requested
-// element does not exist. This value is determined after single hyphen flags
-// with multiple characters have been exploded.
-func (fs *FlagSet) Arg(i int) string {
+// Operand returns the i'th operand. Operand(0) is the first remaining argument
+// after flags have been processed. Operand returns an empty string if the
+// requested element does not exist. This value is determined after single
+// hyphen flags with multiple characters have been exploded.
+func (fs *FlagSet) Operand(i int) string {
 	return fs.fs.Arg(i)
 }
 
-// Args returns the non-flag arguments.
-func (fs *FlagSet) Args() []string {
+// Operands returns the non-flag arguments.
+func (fs *FlagSet) Operands() []string {
 	return fs.fs.Args()
-}
-
-// NArg is the number of arguments remaining after flags have been processed.
-func (fs *FlagSet) NArg() int {
-	return fs.fs.NArg()
 }
 
 // NFlag returns the number of command-line flags that have been set. This

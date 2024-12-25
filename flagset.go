@@ -93,15 +93,15 @@ func (fs *FlagSet) Name() string {
 // defined and before flags are accessed by the program. Before parsing occurs,
 // all single hyphen flags with multiple characters are exploded out as though
 // they were their own flag (e.g. -abc = -a -b -c).
-func (fs *FlagSet) Parse(arguments []string) error {
-	fs.parsed = explodeShortArgs(arguments)
+func (fs *FlagSet) Parse(args []string) error {
+	fs.parsed = explodeShortArgs(args)
 
 	if err := fs.fs.Parse(fs.parsed); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
 			return fmt.Errorf("flagset: parse: %w", mayWrapNotDefined(err))
 		}
 
-		if h, ok := findFirstHelp(arguments); ok {
+		if h, ok := findFirstHelp(args); ok {
 			err = fmt.Errorf("flagset: parse: flag provided but not defined: %s", h)
 			return mayWrapNotDefined(err)
 		}

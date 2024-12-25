@@ -28,14 +28,13 @@ Flags for {{.Name}}:
 {{- end}}
 `)
 
-// SetUsageTemplate allows callers to override the base template text.
-func (fs *FlagSet) SetUsageTemplate(txt string) {
+// SetUsageTemplating allows callers to override the base template text, and
+// provide a custom FuncMap. If a nil FuncMap is provided, no change will be
+// made to the existing value.
+func (fs *FlagSet) SetUsageTemplating(txt string, m template.FuncMap) {
 	fs.tmplTxt = txt
-}
-
-func (fs *FlagSet) UpdateUsageFuncMap(m template.FuncMap) {
-	for k, v := range m {
-		fs.tmplFuncMap[k] = v
+	if m != nil {
+		fs.tmplFuncMap = m
 	}
 }
 

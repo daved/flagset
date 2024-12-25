@@ -22,7 +22,7 @@ Flags for {{.Name}}:
   {{- if $flag.Longs}}--{{Join $flag.Longs ", --"}}{{end}}
   {{- if $flag.TypeHint}}  {{$flag.TypeHint}}{{end}}
   {{- if $flag.DefaultHint}}    {{$flag.DefaultHint}}{{end}}
-        {{$flag.Usage}}
+        {{$flag.Description}}
 {{end}}
 {{else}}
 {{- end}}

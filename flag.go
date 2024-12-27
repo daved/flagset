@@ -51,8 +51,12 @@ func typeName(val any) string {
 	var out string
 
 	switch val.(type) {
-	case FlagFunc, FlagBoolFunc, TextMarshalUnmarshaler, flag.Value:
+	case FlagBoolFunc:
+		out = "bool"
+
+	case FlagFunc, TextMarshalUnmarshaler, flag.Value:
 		out = "value"
+
 	default:
 		v := reflect.ValueOf(val)
 		if v.Kind() == reflect.Ptr {

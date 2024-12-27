@@ -123,8 +123,10 @@ func (fs *FlagSet) Flag(val any, names, desc string) *Flag {
 		if vto.In(0).Kind() == reflect.String && vto.Out(0).Implements(errIface) {
 			val = FlagFunc(val.(func(string) error))
 		}
-		if vto.In(0).Kind() == reflect.Bool && vto.Out(0).Implements(errIface) {
-			val = FlagBoolFunc(val.(func(bool) error))
+		if vto.In(0).Kind() == reflect.Bool && vto.In(1).Kind() == reflect.String {
+			if vto.Out(0).Implements(errIface) {
+				val = FlagBoolFunc(val.(func(bool, string) error))
+			}
 		}
 	}
 
@@ -197,7 +199,7 @@ type FlagFunc func(string) error
 // FlagBoolFunc describes functions that can be called when a bool flag option
 // is succesfully parsed. Currently, this cannot pass errors values back to
 // callers as the stdlib flag pkg eats them.
-type FlagBoolFunc func(bool) error
+type FlagBoolFunc func(resolved bool, provided string) error
 
 func addFlagTo(fs *flag.FlagSet, val any, flagName, desc string) {
 	switch v := val.(type) {
@@ -226,13 +228,13 @@ func addFlagTo(fs *flag.FlagSet, val any, flagName, desc string) {
 	case FlagBoolFunc:
 		fn := func(s string) error {
 			if s == "" {
-				return v(true)
+				return v(true, s)
 			}
 			b, err := strconv.ParseBool(s)
 			if err != nil {
 				return err
 			}
-			return v(b)
+			return v(b, s)
 		}
 		fs.BoolFunc(flagName, desc, fn)
 	}

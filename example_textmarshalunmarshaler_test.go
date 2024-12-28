@@ -43,7 +43,7 @@ func (c *Color) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func ExampleTextMarshalUnmarshaler() {
+func Example_textMarshalUnmarshaler() {
 	c := Red
 
 	fs := flagset.New("app")

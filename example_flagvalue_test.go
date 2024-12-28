@@ -27,7 +27,7 @@ func (v URLValue) Set(s string) error {
 	return nil
 }
 
-func ExampleFlagValue() {
+func Example_flagValue() {
 	url := URLValue{&url.URL{}}
 
 	fs := flagset.New("app")

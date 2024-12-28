@@ -6,14 +6,14 @@ import (
 	"github.com/daved/flagset"
 )
 
-func ExampleFlagFunc() {
-	do := func(flagVal string) error {
+func Example_flagFunc() {
+	onFlag := func(flagVal string) error {
 		fmt.Println("Flag Value:", flagVal)
 		return nil
 	}
 
 	fs := flagset.New("app")
-	fs.Flag(do, "do|d", "Run 'do'.")
+	fs.Flag(onFlag, "do|d", "Run 'onFlag'.")
 
 	args := []string{"--do=something"}
 
@@ -31,5 +31,5 @@ func ExampleFlagFunc() {
 	// Flags for app:
 	//
 	//     -d, --do  =VALUE
-	//         Run 'do'.
+	//         Run 'onFlag'.
 }

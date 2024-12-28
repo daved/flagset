@@ -55,9 +55,7 @@ Flags for {{.FlagSet.Name}}:
   {{- if $flag.TypeName}}  {{TypeHint $flag.TypeName}}{{end}}
   {{- if $flag.DefaultText}}    {{DefaultHint $flag.DefaultText}}{{end}}
         {{$flag.Description}}
-{{end}}
-{{else}}
-{{- end}}
+{{end}}{{else}}{{- end}}
 `)
 
 	return &TmplConfig{

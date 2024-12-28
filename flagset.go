@@ -72,13 +72,6 @@ func (fs *FlagSet) Operands() []string {
 	return fs.sfs.Args()
 }
 
-// NFlag returns the number of command-line flags that have been set. This
-// value is determined after single hyphen flags with multiple characters have
-// been exploded.
-func (fs *FlagSet) NFlag() int {
-	return fs.sfs.NFlag()
-}
-
 // Name returns the name of the FlagSet set during construction.
 func (fs *FlagSet) Name() string {
 	return fs.sfs.Name()

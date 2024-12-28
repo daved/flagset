@@ -56,13 +56,12 @@ func Example_textMarshalUnmarshaler() {
 		return
 	}
 
-	colorTxt, _ := c.MarshalText()
-	fmt.Printf("Color: %s\n", colorTxt)
+	fmt.Printf("Color Value: %d\n", c)
 	fmt.Println()
 	fmt.Println(fs.Usage())
 
 	// Output:
-	// Color: green
+	// Color Value: 2
 	//
 	// Flags for app:
 	//

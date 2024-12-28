@@ -6,29 +6,27 @@
 package flagset
 
 import (
-	"encoding"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
-	"reflect"
-	"strconv"
 	"strings"
-	"text/template"
 	"time"
 	"unicode/utf8"
+
+	"github.com/daved/flagset/tmpl"
+	"github.com/daved/flagset/vtypes"
 )
 
 // TODO: add sensible errors
 
 // FlagSet contains flag options and related information used for usage output.
 type FlagSet struct {
-	fs     *flag.FlagSet
+	sfs    *flag.FlagSet
 	flags  []*Flag
 	parsed []string
 
-	tmplFuncMap template.FuncMap
-	tmplTxt     string
+	tmplCfg *TmplConfig
 
 	HideTypeHints    bool
 	HideDefaultHints bool
@@ -38,17 +36,16 @@ type FlagSet struct {
 // New constructs a FlagSet. In this package, it is conventional to name the
 // flagset after the command that the options are being associated with.
 func New(name string) *FlagSet {
-	fs := flag.NewFlagSet(name, flag.ContinueOnError)
-	fs.SetOutput(io.Discard)
+	sfs := flag.NewFlagSet(name, flag.ContinueOnError)
+	sfs.SetOutput(io.Discard)
 
-	return &FlagSet{
-		fs: fs,
-		tmplFuncMap: template.FuncMap{
-			"Join": strings.Join,
-		},
-		tmplTxt: tmplText,
+	fs := &FlagSet{
+		sfs:     sfs,
+		tmplCfg: NewDefaultTmplConfig(),
 		Meta:    map[string]any{},
 	}
+
+	return fs
 }
 
 // Flags returns all flag options that have been set.
@@ -68,24 +65,24 @@ func (fs *FlagSet) Parsed() []string {
 // requested element does not exist. This value is determined after single
 // hyphen flags with multiple characters have been exploded.
 func (fs *FlagSet) Operand(i int) string {
-	return fs.fs.Arg(i)
+	return fs.sfs.Arg(i)
 }
 
 // Operands returns the non-flag arguments.
 func (fs *FlagSet) Operands() []string {
-	return fs.fs.Args()
+	return fs.sfs.Args()
 }
 
 // NFlag returns the number of command-line flags that have been set. This
 // value is determined after single hyphen flags with multiple characters have
 // been exploded.
 func (fs *FlagSet) NFlag() int {
-	return fs.fs.NFlag()
+	return fs.sfs.NFlag()
 }
 
 // Name returns the name of the FlagSet set during construction.
 func (fs *FlagSet) Name() string {
-	return fs.fs.Name()
+	return fs.sfs.Name()
 }
 
 // Parse parses flag definitions from the argument list, which should not
@@ -96,7 +93,7 @@ func (fs *FlagSet) Name() string {
 func (fs *FlagSet) Parse(args []string) error {
 	fs.parsed = explodeShortArgs(args)
 
-	if err := fs.fs.Parse(fs.parsed); err != nil {
+	if err := fs.sfs.Parse(fs.parsed); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
 			return fmt.Errorf("flagset: parse: %w", mayWrapNotDefined(err))
 		}
@@ -117,27 +114,25 @@ func (fs *FlagSet) Parse(args []string) error {
 // be separated by a pipe (|) character. If val has a usable non-zero value, it
 // will be used as the default value for that flag option.
 func (fs *FlagSet) Flag(val any, names, desc string) *Flag {
-	if reflect.ValueOf(val).Kind() == reflect.Func {
-		vto := reflect.TypeOf(val)
-		errIface := reflect.TypeOf((*error)(nil)).Elem()
-		if vto.In(0).Kind() == reflect.String && vto.Out(0).Implements(errIface) {
-			val = FlagFunc(val.(func(string) error))
-		}
-		if vto.In(0).Kind() == reflect.Bool && vto.In(1).Kind() == reflect.String {
-			if vto.Out(0).Implements(errIface) {
-				val = FlagBoolFunc(val.(func(bool, string) error))
-			}
-		}
+	switch v := val.(type) {
+	case vtypes.FlagFunc:
+		val = vtypes.FlagCallback(v)
+	case vtypes.FlagBoolFunc:
+		val = vtypes.FlagCallback(v)
+	case func(string) error:
+		val = vtypes.FlagCallback(vtypes.FlagFunc(v))
+	case func(bool) error:
+		val = vtypes.FlagCallback(vtypes.FlagBoolFunc(v))
 	}
 
 	longs, shorts := longsAndShorts(names)
 
 	for _, long := range longs {
-		addFlagTo(fs.fs, val, long, desc)
+		addFlagTo(fs.sfs, val, long, desc)
 	}
 
 	for _, short := range shorts {
-		addFlagTo(fs.fs, val, short, desc)
+		addFlagTo(fs.sfs, val, short, desc)
 	}
 
 	flag := newFlag(val, longs, shorts, desc)
@@ -184,23 +179,6 @@ func longsAndShorts(flags string) (longs, shorts []string) {
 	return longs, shorts
 }
 
-// TextMarshalUnmarshaler descibes types that are able to be marshaled to and
-// unmarshaled from text.
-type TextMarshalUnmarshaler interface {
-	encoding.TextUnmarshaler
-	encoding.TextMarshaler
-}
-
-// FlagFunc describes functions that can be called when a flag option is
-// succesfully parsed. Currently, this cannot pass errors values back to callers
-// as the stdlib flag pkg eats them.
-type FlagFunc func(string) error
-
-// FlagBoolFunc describes functions that can be called when a bool flag option
-// is succesfully parsed. Currently, this cannot pass errors values back to
-// callers as the stdlib flag pkg eats them.
-type FlagBoolFunc func(resolved bool, provided string) error
-
 func addFlagTo(fs *flag.FlagSet, val any, flagName, desc string) {
 	switch v := val.(type) {
 	case *string:
@@ -219,24 +197,16 @@ func addFlagTo(fs *flag.FlagSet, val any, flagName, desc string) {
 		fs.Float64Var(v, flagName, *v, desc)
 	case *time.Duration:
 		fs.DurationVar(v, flagName, *v, desc)
-	case TextMarshalUnmarshaler:
+	case vtypes.TextMarshalUnmarshaler:
 		fs.TextVar(v, flagName, v, desc)
 	case flag.Value:
 		fs.Var(v, flagName, desc)
-	case FlagFunc:
-		fs.Func(flagName, desc, v)
-	case FlagBoolFunc:
-		fn := func(s string) error {
-			if s == "" {
-				return v(true, s)
-			}
-			b, err := strconv.ParseBool(s)
-			if err != nil {
-				return err
-			}
-			return v(b, s)
+	case vtypes.FlagCallback:
+		if v.IsBool() {
+			fs.BoolFunc(flagName, desc, v.OnFlag)
+		} else {
+			fs.Func(flagName, desc, v.OnFlag)
 		}
-		fs.BoolFunc(flagName, desc, fn)
 	}
 }
 
@@ -266,4 +236,27 @@ func mayWrapNotDefined(err error) error {
 	}
 
 	return &transparentError{err, msg}
+}
+
+// SetUsageTemplating allows callers to override the base template text, and
+// provide a custom FuncMap. If a nil FuncMap is provided, no change will be
+// made to the existing value.
+func (fs *FlagSet) SetUsageTemplating(tmplCfg *TmplConfig) {
+	fs.tmplCfg = tmplCfg
+}
+
+// Usage returns the parsed usage template. Each Flag type's Meta field is
+// leveraged to convey detailed info/behavior. This method and related template
+// can be used as an example for callers to wrap the FlagSet type and design
+// their own usage output. For example, grouping, sorting, etc.
+func (fs *FlagSet) Usage() string {
+	t := tmpl.New(
+		fs.tmplCfg.Text,
+		fs.tmplCfg.FMap,
+		&TmplData{
+			FlagSet: fs,
+		},
+	)
+
+	return t.String()
 }

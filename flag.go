@@ -4,7 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"reflect"
-	"strings"
+
+	"github.com/daved/flagset/vtypes"
 )
 
 // Flag manages flag option data. The fields are mostly unexposed to emphasize
@@ -15,8 +16,8 @@ type Flag struct {
 	shorts []string
 	desc   string
 
-	TypeHint    string
-	DefaultHint string
+	TypeName    string
+	DefaultText string
 	HideUsage   bool
 	Meta        map[string]any
 }
@@ -26,8 +27,8 @@ func newFlag(val any, longs, shorts []string, desc string) *Flag {
 		longs:       longs,
 		shorts:      shorts,
 		desc:        desc,
-		TypeHint:    typeName(val),
-		DefaultHint: defaultText(val),
+		TypeName:    typeName(val),
+		DefaultText: defaultText(val),
 		Meta:        map[string]any{},
 	}
 }
@@ -50,48 +51,39 @@ func (f Flag) Description() string {
 func typeName(val any) string {
 	var out string
 
-	switch val.(type) {
-	case FlagBoolFunc:
-		out = "bool"
+	switch v := val.(type) {
+	case vtypes.FlagCallback:
+		if v.IsBool() {
+			out = "bool"
+		} else {
+			out = "value"
+		}
 
-	case FlagFunc, TextMarshalUnmarshaler, flag.Value:
+	case vtypes.TextMarshalUnmarshaler, flag.Value:
 		out = "value"
 
 	default:
-		v := reflect.ValueOf(val)
-		if v.Kind() == reflect.Ptr {
-			v = v.Elem()
+		rv := reflect.ValueOf(val)
+		if rv.Kind() == reflect.Ptr {
+			rv = rv.Elem()
 		}
-		out = v.Type().Name()
-	}
-
-	if out != "" {
-		pre, post := "=", ""
-
-		switch val.(type) {
-		case *bool, FlagBoolFunc:
-			pre, post = "[=", "]"
-		}
-
-		out = pre + strings.ToUpper(out) + post
+		out = rv.Type().Name()
 	}
 
 	return out
 }
 
-const defaultPrefix = "default: "
-
 func defaultText(val any) string {
 	var out string
 
 	switch v := val.(type) {
-	case TextMarshalUnmarshaler:
+	case vtypes.TextMarshalUnmarshaler:
 		t, err := v.MarshalText()
 		if err != nil {
 			return err.Error()
 		}
 		out = string(t)
-	case FlagFunc, FlagBoolFunc:
+	case vtypes.FlagCallback:
 		out = ""
 	case fmt.Stringer:
 		out = v.String()
@@ -101,10 +93,6 @@ func defaultText(val any) string {
 			vo = vo.Elem()
 		}
 		out = fmt.Sprint(vo)
-	}
-
-	if out != "" {
-		out = defaultPrefix + out
 	}
 
 	return out

@@ -14,7 +14,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/daved/flagset/tmpl"
 	"github.com/daved/flagset/vtypes"
 )
 
@@ -250,13 +249,5 @@ func (fs *FlagSet) SetUsageTemplating(tmplCfg *TmplConfig) {
 // can be used as an example for callers to wrap the FlagSet type and design
 // their own usage output. For example, grouping, sorting, etc.
 func (fs *FlagSet) Usage() string {
-	t := tmpl.New(
-		fs.tmplCfg.Text,
-		fs.tmplCfg.FMap,
-		&TmplData{
-			FlagSet: fs,
-		},
-	)
-
-	return t.String()
+	return executeTmpl(fs.tmplCfg, &TmplData{FlagSet: fs})
 }

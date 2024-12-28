@@ -1,6 +1,8 @@
 package flagset
 
 import (
+	"bytes"
+	"fmt"
 	"strings"
 	"text/template"
 )
@@ -62,4 +64,23 @@ Flags for {{.FlagSet.Name}}:
 		Text: tmplText,
 		FMap: tmplFMap,
 	}
+}
+
+func executeTmpl(tc *TmplConfig, data any) string {
+	tmpl := template.New("flagset").Funcs(tc.FMap)
+
+	buf := &bytes.Buffer{}
+
+	tmpl, err := tmpl.Parse(tc.Text)
+	if err != nil {
+		fmt.Fprintf(buf, "%v\n", err)
+		return buf.String()
+	}
+
+	if err := tmpl.Execute(buf, data); err != nil {
+		fmt.Fprintf(buf, "%v\n", err)
+		return buf.String()
+	}
+
+	return buf.String()
 }

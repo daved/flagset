@@ -14,6 +14,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/daved/flagset/fserrs"
 	"github.com/daved/flagset/vtypes"
 )
 
@@ -87,12 +88,12 @@ func (fs *FlagSet) Parse(args []string) error {
 
 	if err := fs.sfs.Parse(fs.parsed); err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
-			return fmt.Errorf("flagset: parse: %w", mayWrapNotDefined(err))
+			return NewError(fserrs.NewParseError(mayWrapNotDefined(err)))
 		}
 
 		if h, ok := findFirstHelp(args); ok {
-			err = fmt.Errorf("flagset: parse: flag provided but not defined: %s", h)
-			return mayWrapNotDefined(err)
+			err := fmt.Errorf("flagset: parse: flag provided but not defined: %s", h)
+			return NewError(fserrs.NewParseError(mayWrapNotDefined(err)))
 		}
 	}
 

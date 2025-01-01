@@ -18,8 +18,6 @@ import (
 	"github.com/daved/flagset/vtypes"
 )
 
-// TODO: add sensible errors
-
 // FlagSet contains flag options and related information used for usage output.
 type FlagSet struct {
 	sfs    *flag.FlagSet

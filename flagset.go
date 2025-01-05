@@ -15,7 +15,7 @@ import (
 	"unicode/utf8"
 
 	er "github.com/daved/flagset/fserrs"
-	"github.com/daved/flagset/vtypes"
+	"github.com/daved/flagset/vtype"
 )
 
 // FlagSet contains flag options and related information used for usage output.
@@ -76,11 +76,11 @@ func (fs *FlagSet) Name() string {
 	return fs.sfs.Name()
 }
 
-// Parse parses flag definitions from the argument list, which should not
-// include the command name. Must be called after all flags in the FlagSet are
-// defined and before flags are accessed by the program. Before parsing occurs,
-// all single hyphen flags with multiple characters are exploded out as though
-// they were their own flag (e.g. -abc = -a -b -c).
+// Parse parses flag definitions from the argument list, which must not	include
+// the initial command name. Parse must be called after all flags in the FlagSet
+// are defined and before flag values are accessed by the program. Before
+// parsing occurs, all single hyphen flags with multiple characters are exploded
+// out as though they are their own flag (e.g. -abc = -a -b -c).
 func (fs *FlagSet) Parse(args []string) error {
 	fs.parsed = explodeShortArgs(args)
 
@@ -100,21 +100,25 @@ func (fs *FlagSet) Parse(args []string) error {
 }
 
 // Flag adds a flag option to the FlagSet.
-// Valid values are: *string, *bool, *int, *int64, *uint, *uint64, *float64,
-// *time.Duration, TextMarshalUnmarshaler, flag.Value, FlagFunc
+// Valid values are:
+//   - builtin: *string, *bool, *int, *int64, *uint, *uint64, *float64
+//   - stdlib: *[time.Duration], [flag.Value]
+//   - vtype: [vtype.TextMarshalUnmarshaler], [vtype.FlagCallback],
+//     [vtype.FlagFunc] [vtype.FlagBoolFunc]
+//
 // Names can include multiple long and multiple short values. Each value should
 // be separated by a pipe (|) character. If val has a usable non-zero value, it
 // will be used as the default value for that flag option.
 func (fs *FlagSet) Flag(val any, names, desc string) *Flag {
 	switch v := val.(type) {
-	case vtypes.FlagFunc:
-		val = vtypes.FlagCallback(v)
-	case vtypes.FlagBoolFunc:
-		val = vtypes.FlagCallback(v)
+	case vtype.FlagFunc:
+		val = vtype.FlagCallback(v)
+	case vtype.FlagBoolFunc:
+		val = vtype.FlagCallback(v)
 	case func(string) error:
-		val = vtypes.FlagCallback(vtypes.FlagFunc(v))
+		val = vtype.FlagCallback(vtype.FlagFunc(v))
 	case func(bool) error:
-		val = vtypes.FlagCallback(vtypes.FlagBoolFunc(v))
+		val = vtype.FlagCallback(vtype.FlagBoolFunc(v))
 	}
 
 	longs, shorts := longsAndShorts(names)
@@ -189,11 +193,11 @@ func addFlagTo(fs *flag.FlagSet, val any, flagName, desc string) {
 		fs.Float64Var(v, flagName, *v, desc)
 	case *time.Duration:
 		fs.DurationVar(v, flagName, *v, desc)
-	case vtypes.TextMarshalUnmarshaler:
+	case vtype.TextMarshalUnmarshaler:
 		fs.TextVar(v, flagName, v, desc)
 	case flag.Value:
 		fs.Var(v, flagName, desc)
-	case vtypes.FlagCallback:
+	case vtype.FlagCallback:
 		if v.IsBool() {
 			fs.BoolFunc(flagName, desc, v.OnFlag)
 		} else {

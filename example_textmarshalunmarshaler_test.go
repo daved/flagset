@@ -11,13 +11,16 @@ import (
 type Color int
 
 const (
-	Red Color = iota + 1
+	Unset Color = iota
+	Red
 	Green
 	Blue
 )
 
 func (c Color) MarshalText() (text []byte, err error) {
 	switch c {
+	case Unset:
+		return nil, nil
 	case Red:
 		return []byte("red"), nil
 	case Green:

@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/daved/flagset/vtypes"
+	"github.com/daved/flagset/vtype"
 )
 
-// Flag manages flag option data. The fields are mostly unexposed to emphasize
-// that the fields should not be modified unexpectedly. It is appropriate to
-// modify the Meta map to communicate info/behavior to the usage template.
+// Flag manages flag option data. Exported fields are able to be set for use in
+// usage output templating (overriding existing behavior).
 type Flag struct {
 	longs  []string
 	shorts []string
@@ -52,14 +51,14 @@ func typeName(val any) string {
 	var out string
 
 	switch v := val.(type) {
-	case vtypes.FlagCallback:
+	case vtype.FlagCallback:
 		if v.IsBool() {
 			out = "bool"
 		} else {
 			out = "value"
 		}
 
-	case vtypes.TextMarshalUnmarshaler, flag.Value:
+	case vtype.TextMarshalUnmarshaler, flag.Value:
 		out = "value"
 
 	default:
@@ -77,13 +76,13 @@ func defaultText(val any) string {
 	var out string
 
 	switch v := val.(type) {
-	case vtypes.TextMarshalUnmarshaler:
+	case vtype.TextMarshalUnmarshaler:
 		t, err := v.MarshalText()
 		if err != nil {
 			return err.Error()
 		}
 		out = string(t)
-	case vtypes.FlagCallback:
+	case vtype.FlagCallback:
 		out = ""
 	case fmt.Stringer:
 		out = v.String()

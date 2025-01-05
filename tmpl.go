@@ -7,15 +7,21 @@ import (
 	"text/template"
 )
 
+// TmplData is the structure used for usage output templating. Custom template
+// string values should be based on this type.
 type TmplData struct {
 	FlagSet *FlagSet
 }
 
+// TmplConfig tracks the template string and function map used for usage output
+// templating.
 type TmplConfig struct {
 	Text string
 	FMap template.FuncMap
 }
 
+// NewDefaultTmplConfig returns the default TmplConfig value. This can be used
+// as an example of how to setup custom usage output templating.
 func NewDefaultTmplConfig() *TmplConfig {
 	typeHintFn := func(t string) string {
 		if t == "" {

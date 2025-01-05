@@ -1,4 +1,4 @@
-package vtypes
+package vtype
 
 import (
 	"encoding"

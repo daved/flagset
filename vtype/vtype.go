@@ -12,6 +12,12 @@ type TextMarshalUnmarshaler interface {
 	encoding.TextMarshaler
 }
 
+// FlagCallback describes types that will have a callback ("OnFlag") run when
+// the associated flag is parsed. The IsBool method is necessary because bool
+// flags are treated specially during parsing. While it is reasonable to
+// implement this type directly, it is recommended to, instead, provide a
+// function compatible with [FlagFunc] or [FlagBoolFunc] as conversion is done
+// automatically, and both Func types are implementations of FlagCallback.
 type FlagCallback interface {
 	OnFlag(val string) error
 	IsBool() bool

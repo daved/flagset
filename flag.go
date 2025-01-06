@@ -8,17 +8,18 @@ import (
 	"github.com/daved/flagset/vtype"
 )
 
-// Flag manages flag option data. Exported fields are able to be set for use in
-// usage output templating (overriding existing behavior).
+// Flag manages flag option data. The exported fields are for easy
+// post-construction configuration.
 type Flag struct {
+	// Fields used for templating:
+	TypeName    string // is derived from the val type when possible
+	DefaultText string // is derived from the val value when possible
+	HideUsage   bool
+	Meta        map[string]any
+
 	longs  []string
 	shorts []string
 	desc   string
-
-	TypeName    string
-	DefaultText string
-	HideUsage   bool
-	Meta        map[string]any
 }
 
 func newFlag(val any, longs, shorts []string, desc string) *Flag {

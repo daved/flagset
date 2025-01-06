@@ -1,8 +1,8 @@
-// Package flagset wraps the standard library flag package and focuses on the
-// flag.FlagSet type. This is done to simplify usage, and to add handling for
+// Package flagset wraps the standard library [flag] package and focuses on the
+// [flag.FlagSet] type. This is done to simplify usage, and to add handling for
 // single hyphen (e.g -h) and double hyphen (e.g. --help) flags. Specifically,
 // single hyphen prefixed values with multiple characters are exploded out as
-// though they were their own flag (e.g. -abc = -a -b -c).
+// though each character was its own flag (e.g. -abc = -a -b -c).
 package flagset
 
 import (
@@ -19,16 +19,18 @@ import (
 )
 
 // FlagSet contains flag options and related information used for usage output.
+// The exported fields are for easy post-construction configuration.
 type FlagSet struct {
+	// Fields used for templating:
+	HideTypeHints    bool
+	HideDefaultHints bool
+	Meta             map[string]any
+
 	sfs    *flag.FlagSet
 	flags  []*Flag
 	parsed []string
 
 	tmplCfg *TmplConfig
-
-	HideTypeHints    bool
-	HideDefaultHints bool
-	Meta             map[string]any
 }
 
 // New constructs a FlagSet. In this package, it is conventional to name the

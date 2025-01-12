@@ -243,10 +243,8 @@ func (fs *FlagSet) SetUsageTemplating(tmplCfg *TmplConfig) {
 	fs.tmplCfg = tmplCfg
 }
 
-// Usage returns the parsed usage template. Each Flag type's Meta field is
-// leveraged to convey detailed info/behavior. This method and related template
-// can be used as an example for callers to wrap the FlagSet type and design
-// their own usage output. For example, grouping, sorting, etc.
+// Usage returns the executed usage template. Each Flag type's Meta field can
+// be leveraged to convey detailed info/behavior in a custom template.
 func (fs *FlagSet) Usage() string {
 	return executeTmpl(fs.tmplCfg, &TmplData{FlagSet: fs})
 }

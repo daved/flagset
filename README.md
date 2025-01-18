@@ -83,8 +83,9 @@ The main vtype types are interface types. First, TextMarshalUnmarshaler describe
 satisfy both the encoding.TextMarshaler and encoding.TextUnmarshaler interfaces, and is offered so
 that callers can easily use standard library compatible types. Second, FlagCallback describes types
 which indicate whether they are intended to be used with bool flags and provide an action to take
-when the related flag is called. Both FlagFunc and FlagBoolFunc are offered so that callers can
-easily associate their own functions with flags.
+when the related flag is called. Both FlagFunc and FlagBoolFunc implement FlagCallback and are
+offered so that callers can easily associate their own functions with flags. That is, compatible
+functions will be automatically converted to either FlagFunc or FlagBoolFunc.
 
 ```go
 func main() {
@@ -103,6 +104,10 @@ func main() {
         return
     }
 }
+```
+Output:
+```txt
+Flag Value: something
 ```
 
 ### Additional Flag Value Type Examples

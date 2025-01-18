@@ -105,8 +105,8 @@ func (fs *FlagSet) Parse(args []string) error {
 // Valid values are:
 //   - builtin: *string, *bool, *int, *int64, *uint, *uint64, *float64
 //   - stdlib: *[time.Duration], [flag.Value]
-//   - vtype: [vtype.TextMarshalUnmarshaler], [vtype.FlagFunc],
-//     [vtype.FlagBoolFunc], [vtype.FlagCallback]
+//   - vtype: [vtype.TextMarshalUnmarshaler], [vtype.FlagCallback],
+//     [vtype.FlagFunc], [vtype.FlagBoolFunc]
 //
 // Names can include multiple long and multiple short values. Each value should
 // be separated by a pipe (|) character. If val has a usable non-zero value, it

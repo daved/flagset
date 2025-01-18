@@ -7,13 +7,13 @@ import (
 )
 
 func Example_flagFunc() {
-	onFlag := func(flagVal string) error {
+	do := func(flagVal string) error {
 		fmt.Println("Flag Value:", flagVal)
 		return nil
 	}
 
 	fs := flagset.New("app")
-	fs.Flag(onFlag, "do|d", "Run 'onFlag'.")
+	fs.Flag(do, "do|d", "Run callback.")
 
 	args := []string{"--do=something"}
 
@@ -31,5 +31,5 @@ func Example_flagFunc() {
 	// Flags for app:
 	//
 	//     -d, --do  =VALUE
-	//         Run 'onFlag'.
+	//         Run callback.
 }

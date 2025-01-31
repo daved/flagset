@@ -87,7 +87,6 @@ func (fs *FlagSet) Parse(args []string) error {
 	fs.parsed = explodeShortArgs(args)
 
 	if err := fs.sfs.Parse(fs.parsed); err != nil {
-		fmt.Println(len(fs.sfs.Args()))
 		if !errors.Is(err, flag.ErrHelp) {
 			return er.NewError(er.NewParseError(mayWrapNotDefined(err)))
 		}

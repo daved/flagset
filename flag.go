@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"reflect"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/daved/flagset/vtype"
 )
@@ -23,7 +25,20 @@ type Flag struct {
 	desc   string
 }
 
-func newFlag(val any, longs, shorts []string, desc string) *Flag {
+func newFlag(val any, names string, desc string) *Flag {
+	switch v := val.(type) {
+	case vtype.FlagFunc:
+		val = vtype.FlagCallback(v)
+	case vtype.FlagBoolFunc:
+		val = vtype.FlagCallback(v)
+	case func(string) error:
+		val = vtype.FlagCallback(vtype.FlagFunc(v))
+	case func(bool) error:
+		val = vtype.FlagCallback(vtype.FlagBoolFunc(v))
+	}
+
+	longs, shorts := longsAndShorts(names)
+
 	return &Flag{
 		val:         val,
 		longs:       longs,
@@ -48,6 +63,18 @@ func (f Flag) Shorts() []string {
 // Description returns the description string.
 func (f Flag) Description() string {
 	return f.desc
+}
+
+func longsAndShorts(flags string) (longs, shorts []string) {
+	fs := strings.Split(flags, "|")
+	for _, f := range fs {
+		if utf8.RuneCountInString(f) == 1 {
+			shorts = append(shorts, f)
+			continue
+		}
+		longs = append(longs, f)
+	}
+	return longs, shorts
 }
 
 func typeName(val any) string {

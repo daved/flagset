@@ -1,16 +1,9 @@
-// Package flagset wraps the standard library [flag] package and focuses on the
-// [flag.FlagSet] type. This is done to simplify usage, and to add handling for
-// single hyphen (e.g -h) and double hyphen (e.g. --help) flags. Specifically,
-// single hyphen prefixed values with multiple characters are exploded out as
-// though each character was its own flag (e.g. -abc = -a -b -c).
+// Package flagset provides simple flag and flag value handling using idiomatic
+// techniques for advanced usage. Nomenclature and handling rules are based on
+// POSIX standards. For example, all single hyphen prefixed arguments with
+// multiple characters are exploded out as though they are their own flags (e.g.
+// -abc = -a -b -c).
 package flagset
-
-import (
-	"strings"
-	"unicode/utf8"
-
-	"github.com/daved/flagset/vtype"
-)
 
 // FlagSet contains flag options and related information used for usage output.
 // The exported fields are for easy post-construction configuration.
@@ -76,8 +69,8 @@ func (fs *FlagSet) Name() string {
 // Parse parses flag definitions from the argument list, which must not	include
 // the initial command name. Parse must be called after all flags in the FlagSet
 // are defined and before flag values are accessed by the program. Before
-// parsing occurs, all single hyphen flags with multiple characters are exploded
-// out as though they are their own flag (e.g. -abc = -a -b -c).
+// parsing occurs, all single hyphen prefixed arguments with multiple characters
+// are exploded out as though they are their own flags (e.g. -abc = -a -b -c).
 func (fs *FlagSet) Parse(args []string) error {
 	fs.parsed = explodeShortArgs(args)
 
@@ -99,22 +92,10 @@ func (fs *FlagSet) Parse(args []string) error {
 //
 // Names can include multiple long and multiple short values. Each value should
 // be separated by a pipe (|) character. If val has a usable non-zero value, it
-// will be used as the default value for that flag option.
+// will be used as the default value for that flag option. Functions compatible
+// with [vtype.FlagFunc] and [vtype.FlagBoolFunc] will be converted.
 func (fs *FlagSet) Flag(val any, names, desc string) *Flag {
-	switch v := val.(type) {
-	case vtype.FlagFunc:
-		val = vtype.FlagCallback(v)
-	case vtype.FlagBoolFunc:
-		val = vtype.FlagCallback(v)
-	case func(string) error:
-		val = vtype.FlagCallback(vtype.FlagFunc(v))
-	case func(bool) error:
-		val = vtype.FlagCallback(vtype.FlagBoolFunc(v))
-	}
-
-	longs, shorts := longsAndShorts(names)
-
-	flag := newFlag(val, longs, shorts, desc)
+	flag := newFlag(val, names, desc)
 	fs.flags = append(fs.flags, flag)
 
 	return flag
@@ -135,55 +116,6 @@ func explodeShortArgs(args []string) []string {
 	}
 
 	return exed
-}
-
-func findFirstHelp(args []string) (string, bool) {
-	for _, arg := range args {
-		if arg == "-h" || arg == "--h" || arg == "--help" {
-			return arg, true
-		}
-	}
-	return "", false
-}
-
-func longsAndShorts(flags string) (longs, shorts []string) {
-	fs := strings.Split(flags, "|")
-	for _, f := range fs {
-		if utf8.RuneCountInString(f) == 1 {
-			shorts = append(shorts, f)
-			continue
-		}
-		longs = append(longs, f)
-	}
-	return longs, shorts
-}
-
-type transparentError struct {
-	err error
-	msg string
-}
-
-func (e *transparentError) Error() string {
-	return e.msg
-}
-
-func (e *transparentError) Unwrap() error {
-	return e.err
-}
-
-func mayWrapNotDefined(err error) error {
-	if !strings.Contains(err.Error(), "but not defined:") {
-		return err
-	}
-
-	token := "defined: -"
-	msg := err.Error()
-	_, flag, ok := strings.Cut(msg, token)
-	if ok && len(flag) > 1 && flag[0] != '-' {
-		msg = strings.ReplaceAll(msg, token, token+"-")
-	}
-
-	return &transparentError{err, msg}
 }
 
 // SetUsageTemplating is used to override the base template text, and provide a

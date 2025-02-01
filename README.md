@@ -4,18 +4,18 @@
 go get github.com/daved/flagset
 ```
 
-Package flagset wraps the standard library flag package and focuses on the flag.FlagSet type. This
-is done to simplify usage, and to add handling for single hyphen (e.g -h) and double hyphen (e.g.
---help) flags. Specifically, single hyphen prefixed values with multiple characters are exploded out
-as though each character was its own flag (e.g. -abc = -a -b -c).
+Package flagset provides simple flag and flag value handling using idiomatic techniques for advanced
+usage. Nomenclature and handling rules are based on POSIX standards. For example, all single hyphen
+prefixed arguments with multiple characters are exploded out as though they are their own flags
+(e.g. -abc = -a -b -c). 
 
 ## Usage
 
 ```go
 type Flag
-    func (f Flag) Description() string
-    func (f Flag) Longs() []string
-    func (f Flag) Shorts() []string
+    func (f *Flag) Description() string
+    func (f *Flag) Longs() []string
+    func (f *Flag) Shorts() []string
 type FlagSet
     func New(name string) *FlagSet
     func (fs *FlagSet) Flag(val any, names, desc string) *Flag

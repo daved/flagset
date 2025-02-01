@@ -35,26 +35,25 @@ type FlagSet
 ```go
 func main() {
     var (
-        help bool
-        info = "default-value"
-        num  int
+        info    = "default-value"
+        num     int
+        verbose bool
     )
 
     fs := flagset.New("app")
-    fs.Flag(&help, "help|h", "Display help output.")
-    fs.Flag(&info, "info|i", "Info to use.")
+    fs.Flag(&info, "info|i", "Interesting info.")
     fs.Flag(&num, "num|n", "Number with no usage.").HideUsage = true
+    fs.Flag(&verbose, "verbose|v", "Set verbose output.")
 
-    args := []string{"-h", "--info=non-default", "-n", "42"}
+    args := []string{"--info=non-default", "-n", "42", "-v"}
 
     if err := fs.Parse(args); err != nil {
-        fmt.Println(err)
-        return
+	fmt.Println(err)
+	return
     }
 
-    fmt.Printf("Help: %t, Info: %s, Num: %d\n", help, info, num)
-    fmt.Println()
     fmt.Println(fs.Usage())
+    fmt.Printf("Info: %s, Num: %d, Verbose: %t\n", info, num, verbose)
 }
 ```
 
@@ -62,8 +61,8 @@ func main() {
 
 ### Supported Flag Value Types
 
-- builtin: *string, *bool, *int, *int8, *int16, *int32, *int64, *uint, *uint8, *uint16, *uint32,
-*uint64, *float32, *float64
+- builtin: *string, *bool, error, *int, *int8, *int16, *int32, *int64, *uint, *uint8, *uint16,
+*uint32, *uint64, *float32, *float64
 - stdlib: *time.Duration, flag.Value
 - vtype: vtype.TextMarshalUnmarshaler, vtype.FlagCallback, vtype.FlagFunc, vtype.FlagBoolFunc
 
@@ -122,11 +121,11 @@ Flag Value: something
 ```txt
 Flags for app:
 
-    -h, --help  [=BOOL]    default: false
-        Display help output.
-
     -i, --info  =STRING    default: default-value
-        Info to use.
+        Interesting info.
+
+    -v, --verbose  [=BOOL]    default: false
+        Set verbose output.
 ```
 
 ### Custom Templating

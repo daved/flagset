@@ -112,7 +112,7 @@ func sliceContains(ss []string, s string) bool {
 	return false
 }
 
-func resolveBool(f *Flag) (bool, error) {
+func resolveBool(f *Flag) (isBool bool, boolErr error) {
 	switch v := f.val.(type) {
 	case *bool:
 		*v = true
@@ -120,18 +120,27 @@ func resolveBool(f *Flag) (bool, error) {
 
 	case vtype.FlagCallback:
 		if v.IsBool() {
+			// when isBool, OnFlag won't be called elsewhere
 			err := v.OnFlag("")
 			return true, err
 		}
-	}
+		return false, nil
 
-	return false, nil
+	case error: // always treat as bool
+		return true, v
+
+	default:
+		return false, nil
+	}
 }
 
 func hydrate(val any, raw string) error {
 	newError := er.NewParseError
 
 	switch v := val.(type) {
+	case error:
+		return v
+
 	case *string:
 		*v = raw
 

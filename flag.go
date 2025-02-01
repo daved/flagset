@@ -78,51 +78,48 @@ func longsAndShorts(flags string) (longs, shorts []string) {
 }
 
 func typeName(val any) string {
-	var out string
-
 	switch v := val.(type) {
 	case vtype.FlagCallback:
 		if v.IsBool() {
-			out = "bool"
-		} else {
-			out = "value"
+			return "bool"
 		}
+		return "value"
 
 	case vtype.TextMarshalUnmarshaler, flag.Value:
-		out = "value"
+		return "value"
+
+	case error:
+		return ""
 
 	default:
 		rv := reflect.ValueOf(val)
 		if rv.Kind() == reflect.Ptr {
 			rv = rv.Elem()
 		}
-		out = rv.Type().Name()
+		return rv.Type().Name()
 	}
-
-	return out
 }
 
 func defaultText(val any) string {
-	var out string
-
 	switch v := val.(type) {
 	case vtype.TextMarshalUnmarshaler:
 		t, err := v.MarshalText()
 		if err != nil {
 			return err.Error()
 		}
-		out = string(t)
-	case vtype.FlagCallback:
-		out = ""
+		return string(t)
+
+	case vtype.FlagCallback, error:
+		return ""
+
 	case fmt.Stringer:
-		out = v.String()
+		return v.String()
+
 	default:
 		vo := reflect.ValueOf(val)
 		if vo.Kind() == reflect.Ptr {
 			vo = vo.Elem()
 		}
-		out = fmt.Sprint(vo)
+		return fmt.Sprint(vo)
 	}
-
-	return out
 }

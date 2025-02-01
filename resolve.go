@@ -156,6 +156,27 @@ func hydrate(val any, raw string) error {
 		}
 		*v = n
 
+	case *int8:
+		n, err := strconv.ParseInt(raw, 10, 8)
+		if err != nil {
+			return newError(er.NewConvertRawError(err))
+		}
+		*v = int8(n)
+
+	case *int16:
+		n, err := strconv.ParseInt(raw, 10, 16)
+		if err != nil {
+			return newError(er.NewConvertRawError(err))
+		}
+		*v = int16(n)
+
+	case *int32:
+		n, err := strconv.ParseInt(raw, 10, 32)
+		if err != nil {
+			return newError(er.NewConvertRawError(err))
+		}
+		*v = int32(n)
+
 	case *uint:
 		n, err := strconv.ParseUint(raw, 10, 0)
 		if err != nil {
@@ -170,12 +191,40 @@ func hydrate(val any, raw string) error {
 		}
 		*v = n
 
+	case *uint8:
+		n, err := strconv.ParseUint(raw, 10, 8)
+		if err != nil {
+			return newError(er.NewConvertRawError(err))
+		}
+		*v = uint8(n)
+
+	case *uint16:
+		n, err := strconv.ParseUint(raw, 10, 16)
+		if err != nil {
+			return newError(er.NewConvertRawError(err))
+		}
+		*v = uint16(n)
+
+	case *uint32:
+		n, err := strconv.ParseUint(raw, 10, 32)
+		if err != nil {
+			return newError(er.NewConvertRawError(err))
+		}
+		*v = uint32(n)
+
 	case *float64:
 		f, err := strconv.ParseFloat(raw, 64)
 		if err != nil {
 			return newError(er.NewConvertRawError(err))
 		}
 		*v = f
+
+	case *float32:
+		f, err := strconv.ParseFloat(raw, 32)
+		if err != nil {
+			return newError(er.NewConvertRawError(err))
+		}
+		*v = float32(f)
 
 	case *time.Duration:
 		d, err := time.ParseDuration(raw)

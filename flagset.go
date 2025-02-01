@@ -6,15 +6,9 @@
 package flagset
 
 import (
-	"errors"
-	"flag"
-	"fmt"
-	"io"
 	"strings"
-	"time"
 	"unicode/utf8"
 
-	er "github.com/daved/flagset/fserrs"
 	"github.com/daved/flagset/vtype"
 )
 
@@ -26,9 +20,10 @@ type FlagSet struct {
 	HideDefaultHints bool
 	Meta             map[string]any
 
-	sfs    *flag.FlagSet
+	name   string
 	flags  []*Flag
 	parsed []string
+	ops    []string
 
 	tmplCfg *TmplConfig
 }
@@ -36,11 +31,8 @@ type FlagSet struct {
 // New constructs a FlagSet. In this package, it is conventional to name the
 // flagset after the command that the options are being associated with.
 func New(name string) *FlagSet {
-	sfs := flag.NewFlagSet(name, flag.ContinueOnError)
-	sfs.SetOutput(io.Discard)
-
 	fs := &FlagSet{
-		sfs:     sfs,
+		name:    name,
 		tmplCfg: NewDefaultTmplConfig(),
 		Meta:    map[string]any{},
 	}
@@ -65,17 +57,20 @@ func (fs *FlagSet) Parsed() []string {
 // requested element does not exist. This value is determined after single
 // hyphen flags with multiple characters have been exploded.
 func (fs *FlagSet) Operand(i int) string {
-	return fs.sfs.Arg(i)
+	if i >= len(fs.ops) {
+		return ""
+	}
+	return fs.ops[i]
 }
 
 // Operands returns the non-flag arguments.
 func (fs *FlagSet) Operands() []string {
-	return fs.sfs.Args()
+	return fs.ops
 }
 
 // Name returns the name of the FlagSet set during construction.
 func (fs *FlagSet) Name() string {
-	return fs.sfs.Name()
+	return fs.name
 }
 
 // Parse parses flag definitions from the argument list, which must not	include
@@ -86,17 +81,12 @@ func (fs *FlagSet) Name() string {
 func (fs *FlagSet) Parse(args []string) error {
 	fs.parsed = explodeShortArgs(args)
 
-	if err := fs.sfs.Parse(fs.parsed); err != nil {
-		if !errors.Is(err, flag.ErrHelp) {
-			return er.NewError(er.NewParseError(mayWrapNotDefined(err)))
-		}
-
-		if h, ok := findFirstHelp(args); ok {
-			err := fmt.Errorf("flagset: parse: flag provided but not defined: %s", h)
-			return er.NewError(er.NewParseError(mayWrapNotDefined(err)))
-		}
+	ops, err := resolve(fs.flags, fs.parsed)
+	if err != nil {
+		return err
 	}
 
+	fs.ops = ops
 	return nil
 }
 
@@ -123,14 +113,6 @@ func (fs *FlagSet) Flag(val any, names, desc string) *Flag {
 	}
 
 	longs, shorts := longsAndShorts(names)
-
-	for _, long := range longs {
-		addFlagTo(fs.sfs, val, long, desc)
-	}
-
-	for _, short := range shorts {
-		addFlagTo(fs.sfs, val, short, desc)
-	}
 
 	flag := newFlag(val, longs, shorts, desc)
 	fs.flags = append(fs.flags, flag)
@@ -174,37 +156,6 @@ func longsAndShorts(flags string) (longs, shorts []string) {
 		longs = append(longs, f)
 	}
 	return longs, shorts
-}
-
-func addFlagTo(fs *flag.FlagSet, val any, flagName, desc string) {
-	switch v := val.(type) {
-	case *string:
-		fs.StringVar(v, flagName, *v, desc)
-	case *bool:
-		fs.BoolVar(v, flagName, *v, desc)
-	case *int:
-		fs.IntVar(v, flagName, *v, desc)
-	case *int64:
-		fs.Int64Var(v, flagName, *v, desc)
-	case *uint:
-		fs.UintVar(v, flagName, *v, desc)
-	case *uint64:
-		fs.Uint64Var(v, flagName, *v, desc)
-	case *float64:
-		fs.Float64Var(v, flagName, *v, desc)
-	case *time.Duration:
-		fs.DurationVar(v, flagName, *v, desc)
-	case vtype.TextMarshalUnmarshaler:
-		fs.TextVar(v, flagName, v, desc)
-	case flag.Value:
-		fs.Var(v, flagName, desc)
-	case vtype.FlagCallback:
-		if v.IsBool() {
-			fs.BoolFunc(flagName, desc, v.OnFlag)
-		} else {
-			fs.Func(flagName, desc, v.OnFlag)
-		}
-	}
 }
 
 type transparentError struct {

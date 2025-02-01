@@ -17,6 +17,7 @@ type Flag struct {
 	HideUsage   bool
 	Meta        map[string]any
 
+	val    any
 	longs  []string
 	shorts []string
 	desc   string
@@ -24,6 +25,7 @@ type Flag struct {
 
 func newFlag(val any, longs, shorts []string, desc string) *Flag {
 	return &Flag{
+		val:         val,
 		longs:       longs,
 		shorts:      shorts,
 		desc:        desc,

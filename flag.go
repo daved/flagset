@@ -51,17 +51,17 @@ func newFlag(val any, names string, desc string) *Flag {
 }
 
 // Longs returns all long flag names.
-func (f Flag) Longs() []string {
+func (f *Flag) Longs() []string {
 	return f.longs
 }
 
 // Shorts returns all short flag names.
-func (f Flag) Shorts() []string {
+func (f *Flag) Shorts() []string {
 	return f.shorts
 }
 
 // Description returns the description string.
-func (f Flag) Description() string {
+func (f *Flag) Description() string {
 	return f.desc
 }
 

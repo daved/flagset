@@ -92,6 +92,12 @@ func resolve(flags []*Flag, args []string) ([]string, error) {
 		}
 	}
 
+	if flag != nil {
+		if err := hydrate(flag, ""); err != nil {
+			return nil, wrap(err)
+		}
+	}
+
 	return nil, nil
 }
 
@@ -146,7 +152,7 @@ func hydrate(fa *namedFlag, raw string) error {
 
 	switch v := fa.flag.val.(type) {
 	case error:
-		return v
+		return wrap(fa.name, v)
 
 	case *string:
 		*v = raw

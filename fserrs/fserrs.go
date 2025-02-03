@@ -95,7 +95,7 @@ func NewHydrateError(flag string, child error) *HydrateError {
 }
 
 func (e *HydrateError) Error() string {
-	return fmt.Sprintf("hydrate (%s): %v", e.Flag, e.child)
+	return fmt.Sprintf("hydrate (for %q): %v", e.Flag, e.child)
 }
 
 func (e *HydrateError) Unwrap() error {

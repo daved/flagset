@@ -105,7 +105,7 @@ func findNamedFlag(flags []*Flag, name string) (*namedFlag, error) {
 			return &namedFlag{flag, name}, nil
 		}
 	}
-	return nil, er.NewFindFlagError(NewUnrecognizedFlagError(name))
+	return nil, er.NewFindFlagError(er.NewUnrecognizedFlagError(name))
 }
 
 func sliceContains(ss []string, s string) bool {
@@ -118,7 +118,7 @@ func sliceContains(ss []string, s string) bool {
 }
 
 func hydrateBool(fa *namedFlag) (isBool bool, boolErr error) {
-	wrap := NewHydrateError
+	wrap := er.NewHydrateError
 
 	switch v := fa.flag.val.(type) {
 	case *bool:
@@ -142,7 +142,7 @@ func hydrateBool(fa *namedFlag) (isBool bool, boolErr error) {
 }
 
 func hydrate(fa *namedFlag, raw string) error {
-	wrap := NewHydrateError
+	wrap := er.NewHydrateError
 
 	switch v := fa.flag.val.(type) {
 	case error:

@@ -85,39 +85,39 @@ func (e *FindFlagError) Is(err error) bool {
 	return reflect.TypeOf(e) == reflect.TypeOf(err)
 }
 
-type HydrateError struct {
-	Flag  string
+type FlagHydrateError struct {
+	Name  string
 	child error
 }
 
-func NewHydrateError(flag string, child error) *HydrateError {
-	return &HydrateError{flag, child}
+func NewHydrateError(name string, child error) *FlagHydrateError {
+	return &FlagHydrateError{name, child}
 }
 
-func (e *HydrateError) Error() string {
-	return fmt.Sprintf("hydrate (for %q): %v", e.Flag, e.child)
+func (e *FlagHydrateError) Error() string {
+	return fmt.Sprintf("hydrate (for %q): %v", e.Name, e.child)
 }
 
-func (e *HydrateError) Unwrap() error {
+func (e *FlagHydrateError) Unwrap() error {
 	return e.child
 }
 
-func (e *HydrateError) Is(err error) bool {
+func (e *FlagHydrateError) Is(err error) bool {
 	return reflect.TypeOf(e) == reflect.TypeOf(err)
 }
 
-type UnrecognizedFlagError struct {
-	Arg string
+type FlagUnrecognizedError struct {
+	Name string
 }
 
-func NewUnrecognizedFlagError(arg string) *UnrecognizedFlagError {
-	return &UnrecognizedFlagError{arg}
+func NewFlagUnrecognizedError(name string) *FlagUnrecognizedError {
+	return &FlagUnrecognizedError{name}
 }
 
-func (e *UnrecognizedFlagError) Error() string {
-	return fmt.Sprintf("unrecognized flag: %q", e.Arg)
+func (e *FlagUnrecognizedError) Error() string {
+	return fmt.Sprintf("unrecognized flag: %q", e.Name)
 }
 
-func (e *UnrecognizedFlagError) Is(err error) bool {
+func (e *FlagUnrecognizedError) Is(err error) bool {
 	return reflect.TypeOf(e) == reflect.TypeOf(err)
 }

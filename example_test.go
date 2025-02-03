@@ -117,13 +117,13 @@ func Example_flagValue() {
 func Example_helpError() {
 	var (
 		debug   bool
-		help    = errors.New("help requested")
+		errHelp = errors.New("help requested")
 		verbose bool
 	)
 
 	fs := flagset.New("app")
 	fs.Flag(&debug, "debug|d", "Set debug output.")
-	fs.Flag(help, "help|h", "Display usage output.")
+	fs.Flag(errHelp, "help|h", "Display usage output.")
 	fs.Flag(&verbose, "verbose|v", "Set verbose output.")
 
 	args := []string{"-d", "-h", "-v"}
@@ -131,7 +131,7 @@ func Example_helpError() {
 	if err := fs.Parse(args); err != nil {
 		fmt.Println(fs.Usage())
 
-		if !errors.Is(err, help) {
+		if !errors.Is(err, errHelp) {
 			fmt.Println(err)
 			os.Exit(1)
 		}

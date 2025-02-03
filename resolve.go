@@ -124,7 +124,7 @@ func sliceContains(ss []string, s string) bool {
 }
 
 func hydrateBool(fa *namedFlag) (isBool bool, boolErr error) {
-	wrap := er.NewHydrateError
+	wrap := er.NewFlagHydrateError
 
 	switch v := fa.flag.val.(type) {
 	case *bool:
@@ -148,7 +148,7 @@ func hydrateBool(fa *namedFlag) (isBool bool, boolErr error) {
 }
 
 func hydrate(fa *namedFlag, raw string) error {
-	wrap := er.NewHydrateError
+	wrap := er.NewFlagHydrateError
 
 	switch v := fa.flag.val.(type) {
 	case error:

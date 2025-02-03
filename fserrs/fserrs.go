@@ -90,7 +90,7 @@ type FlagHydrateError struct {
 	child error
 }
 
-func NewHydrateError(name string, child error) *FlagHydrateError {
+func NewFlagHydrateError(name string, child error) *FlagHydrateError {
 	return &FlagHydrateError{name, child}
 }
 

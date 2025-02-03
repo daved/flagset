@@ -8,6 +8,6 @@ import (
 // documentation. If an error has interesting behavior, it should be defined
 // directly in this package.
 type (
-	HydrateError          = fserrs.HydrateError
 	UnrecognizedFlagError = fserrs.UnrecognizedFlagError
+	HydrateError          = fserrs.HydrateError
 )

@@ -5,6 +5,8 @@
 // -abc = -a -b -c).
 package flagset
 
+import "github.com/daved/flagset/fserrs"
+
 // FlagSet contains flag options and related information used for usage output.
 // The exported fields are for easy post-construction configuration.
 type FlagSet struct {
@@ -76,7 +78,7 @@ func (fs *FlagSet) Parse(args []string) error {
 
 	ops, err := resolve(fs.flags, fs.parsed)
 	if err != nil {
-		return err
+		return fserrs.NewError(fserrs.NewParseError(err))
 	}
 
 	fs.ops = ops

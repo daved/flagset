@@ -45,22 +45,42 @@ func (e *ParseError) Is(err error) bool {
 	return reflect.TypeOf(e) == reflect.TypeOf(err)
 }
 
-type ConvertRawError struct {
+type ResolveError struct {
 	child error
 }
 
-func NewConvertRawError(child error) *ConvertRawError {
-	return &ConvertRawError{child}
+func NewResolveError(child error) *ResolveError {
+	return &ResolveError{child}
 }
 
-func (e *ConvertRawError) Error() string {
-	return fmt.Sprintf("convert raw string: %v", e.child)
+func (e *ResolveError) Error() string {
+	return fmt.Sprintf("resolve: %v", e.child)
 }
 
-func (e *ConvertRawError) Unwrap() error {
+func (e *ResolveError) Unwrap() error {
 	return e.child
 }
 
-func (e *ConvertRawError) Is(err error) bool {
+func (e *ResolveError) Is(err error) bool {
+	return reflect.TypeOf(e) == reflect.TypeOf(err)
+}
+
+type FindFlagError struct {
+	child error
+}
+
+func NewFindFlagError(child error) *FindFlagError {
+	return &FindFlagError{child}
+}
+
+func (e *FindFlagError) Error() string {
+	return fmt.Sprintf("find flag: %v", e.child)
+}
+
+func (e *FindFlagError) Unwrap() error {
+	return e.child
+}
+
+func (e *FindFlagError) Is(err error) bool {
 	return reflect.TypeOf(e) == reflect.TypeOf(err)
 }

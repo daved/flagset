@@ -1,7 +1,6 @@
 package flagset
 
 import (
-	"errors"
 	"flag"
 	"strconv"
 	"strings"
@@ -11,13 +10,19 @@ import (
 	"github.com/daved/flagset/vtype"
 )
 
+type namedFlag struct {
+	flag *Flag
+	name string
+}
+
 func resolve(flags []*Flag, args []string) ([]string, error) {
-	var flag *Flag
+	wrap := er.NewResolveError
+	var flag *namedFlag
 
 	for i, arg := range args {
 		if flag != nil { // expecting flag value
-			if err := hydrate(flag.val, arg); err != nil {
-				return nil, err
+			if err := hydrate(flag, arg); err != nil {
+				return nil, wrap(err)
 			}
 
 			flag = nil
@@ -40,14 +45,14 @@ func resolve(flags []*Flag, args []string) ([]string, error) {
 
 			name := arg[2:]
 			if !strings.Contains(name, "=") {
-				flag, err = findFlag(flags, name)
+				flag, err = findNamedFlag(flags, name)
 				if err != nil {
-					return nil, err
+					return nil, wrap(err)
 				}
 
-				isBool, boolErr := resolveBool(flag)
+				isBool, boolErr := hydrateBool(flag)
 				if boolErr != nil {
-					return nil, boolErr
+					return nil, wrap(boolErr)
 				}
 				if isBool {
 					flag = nil
@@ -57,13 +62,13 @@ func resolve(flags []*Flag, args []string) ([]string, error) {
 
 			var raw string
 			name, raw, _ = strings.Cut(name, "=")
-			flag, err = findFlag(flags, name)
+			flag, err = findNamedFlag(flags, name)
 			if err != nil {
-				return nil, err
+				return nil, wrap(err)
 			}
 
-			if err := hydrate(flag.val, raw); err != nil {
-				return nil, err
+			if err := hydrate(flag, raw); err != nil {
+				return nil, wrap(err)
 			}
 
 			flag = nil
@@ -72,14 +77,14 @@ func resolve(flags []*Flag, args []string) ([]string, error) {
 			name := arg[1:2]
 
 			var err error
-			flag, err = findFlag(flags, name)
+			flag, err = findNamedFlag(flags, name)
 			if err != nil {
-				return nil, err
+				return nil, wrap(err)
 			}
 
-			isBool, boolErr := resolveBool(flag)
+			isBool, boolErr := hydrateBool(flag)
 			if boolErr != nil {
-				return nil, boolErr
+				return nil, wrap(boolErr)
 			}
 			if isBool {
 				flag = nil
@@ -90,17 +95,17 @@ func resolve(flags []*Flag, args []string) ([]string, error) {
 	return nil, nil
 }
 
-func findFlag(flags []*Flag, name string) (*Flag, error) {
+func findNamedFlag(flags []*Flag, name string) (*namedFlag, error) {
 	for _, flag := range flags {
 		ss := flag.shorts
 		if len(name) > 1 {
 			ss = flag.longs
 		}
 		if sliceContains(ss, name) {
-			return flag, nil
+			return &namedFlag{flag, name}, nil
 		}
 	}
-	return nil, errors.New("unknown flag name")
+	return nil, er.NewFindFlagError(NewUnrecognizedFlagError(name))
 }
 
 func sliceContains(ss []string, s string) bool {
@@ -112,8 +117,10 @@ func sliceContains(ss []string, s string) bool {
 	return false
 }
 
-func resolveBool(f *Flag) (isBool bool, boolErr error) {
-	switch v := f.val.(type) {
+func hydrateBool(fa *namedFlag) (isBool bool, boolErr error) {
+	wrap := NewHydrateError
+
+	switch v := fa.flag.val.(type) {
 	case *bool:
 		*v = true
 		return true, nil
@@ -122,22 +129,22 @@ func resolveBool(f *Flag) (isBool bool, boolErr error) {
 		if v.IsBool() {
 			// when isBool, OnFlag won't be called elsewhere
 			err := v.OnFlag("")
-			return true, err
+			return true, wrap(fa.name, err)
 		}
 		return false, nil
 
 	case error: // always treat as bool
-		return true, v
+		return true, wrap(fa.name, v)
 
 	default:
 		return false, nil
 	}
 }
 
-func hydrate(val any, raw string) error {
-	newError := er.NewParseError
+func hydrate(fa *namedFlag, raw string) error {
+	wrap := NewHydrateError
 
-	switch v := val.(type) {
+	switch v := fa.flag.val.(type) {
 	case error:
 		return v
 
@@ -147,114 +154,114 @@ func hydrate(val any, raw string) error {
 	case *bool:
 		b, err := strconv.ParseBool(raw)
 		if err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 		*v = b
 
 	case *int:
 		n, err := strconv.Atoi(raw)
 		if err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 		*v = n
 
 	case *int64:
 		n, err := strconv.ParseInt(raw, 10, 0)
 		if err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 		*v = n
 
 	case *int8:
 		n, err := strconv.ParseInt(raw, 10, 8)
 		if err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 		*v = int8(n)
 
 	case *int16:
 		n, err := strconv.ParseInt(raw, 10, 16)
 		if err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 		*v = int16(n)
 
 	case *int32:
 		n, err := strconv.ParseInt(raw, 10, 32)
 		if err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 		*v = int32(n)
 
 	case *uint:
 		n, err := strconv.ParseUint(raw, 10, 0)
 		if err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 		*v = uint(n)
 
 	case *uint64:
 		n, err := strconv.ParseUint(raw, 10, 0)
 		if err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 		*v = n
 
 	case *uint8:
 		n, err := strconv.ParseUint(raw, 10, 8)
 		if err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 		*v = uint8(n)
 
 	case *uint16:
 		n, err := strconv.ParseUint(raw, 10, 16)
 		if err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 		*v = uint16(n)
 
 	case *uint32:
 		n, err := strconv.ParseUint(raw, 10, 32)
 		if err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 		*v = uint32(n)
 
 	case *float64:
 		f, err := strconv.ParseFloat(raw, 64)
 		if err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 		*v = f
 
 	case *float32:
 		f, err := strconv.ParseFloat(raw, 32)
 		if err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 		*v = float32(f)
 
 	case *time.Duration:
 		d, err := time.ParseDuration(raw)
 		if err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 		*v = d
 
 	case vtype.TextMarshalUnmarshaler:
 		if err := v.UnmarshalText([]byte(raw)); err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 
 	case flag.Value:
 		if err := v.Set(raw); err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 
 	case vtype.FlagCallback:
 		if err := v.OnFlag(raw); err != nil {
-			return newError(er.NewConvertRawError(err))
+			return wrap(fa.name, err)
 		}
 	}
 

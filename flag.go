@@ -27,14 +27,21 @@ type Flag struct {
 
 func newFlag(val any, names string, desc string) *Flag {
 	switch v := val.(type) {
-	case vtype.FlagFunc:
-		val = vtype.FlagCallback(v)
-	case vtype.FlagBoolFunc:
-		val = vtype.FlagCallback(v)
 	case func(string) error:
-		val = vtype.FlagCallback(vtype.FlagFunc(v))
+		val = vtype.FlagFunc(v)
 	case func(bool) error:
-		val = vtype.FlagCallback(vtype.FlagBoolFunc(v))
+		val = vtype.FlagBoolFunc(v)
+	default:
+		vo := reflect.ValueOf(val)
+		if vo.Kind() == reflect.Ptr {
+			vo = vo.Elem()
+		}
+
+		switch vo.Kind() {
+		case reflect.Slice:
+			vts := vtype.MakeSlice(val)
+			val = &vts
+		}
 	}
 
 	longs, shorts := longsAndShorts(names)
@@ -79,6 +86,9 @@ func longsAndShorts(flags string) (longs, shorts []string) {
 
 func typeName(val any) string {
 	switch v := val.(type) {
+	case interface{ UsageTypeName() string }:
+		return v.UsageTypeName()
+
 	case vtype.FlagCallback:
 		if v.IsBool() {
 			return "bool"

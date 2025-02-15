@@ -23,25 +23,27 @@ type TmplConfig struct {
 // NewDefaultTmplConfig returns the default TmplConfig value. This can be used
 // as an example of how to setup custom usage output templating.
 func NewDefaultTmplConfig() *TmplConfig {
-	typeHintFn := func(t string) string {
-		if t == "" {
+	typeHintFn := func(f *Flag) string {
+		if f.TypeName == "" {
 			return ""
 		}
 
+		_, isBool := boolVal(f.val)
+
 		pre, post := "=", ""
-		if t == "bool" {
+		if len(f.Longs()) > 0 && isBool {
 			pre, post = "[=", "]"
 		}
 
-		return pre + strings.ToUpper(t) + post
+		return pre + strings.ToUpper(f.TypeName) + post
 	}
 
-	defaultHintFn := func(d string) string {
-		if d == "" {
+	defaultHintFn := func(f *Flag) string {
+		if f.DefaultText == "" {
 			return ""
 		}
 
-		return "default: " + d
+		return "default: " + f.DefaultText
 	}
 
 	tmplFMap := template.FuncMap{
@@ -58,8 +60,8 @@ Flags for {{.FlagSet.Name}}:
   {{if .}}  {{end}}{{if $flag.Shorts}}-{{Join $flag.Shorts ", -"}}{{end}}
   {{- if and $flag.Shorts $flag.Longs}}, {{end}}
   {{- if $flag.Longs}}--{{Join $flag.Longs ", --"}}{{end}}
-  {{- if $flag.TypeName}}  {{TypeHint $flag.TypeName}}{{end}}
-  {{- if $flag.DefaultText}}    {{DefaultHint $flag.DefaultText}}{{end}}
+  {{- if $flag.TypeName}}  {{TypeHint $flag}}{{end}}
+  {{- if $flag.DefaultText}}    {{DefaultHint $flag}}{{end}}
         {{$flag.Description}}
 {{end}}{{else}}{{- end}}
 `)

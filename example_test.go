@@ -218,3 +218,36 @@ func Example_textMarshalUnmarshaler() {
 	//
 	// Color Value: 1, green
 }
+
+func Example_collections() {
+	var (
+		nums    = []int{4, 5}
+		verbose []bool
+	)
+
+	fs := flagset.New("app")
+	fs.Flag(&nums, "nums|n", "Numbers to use. May be set multiple times.")
+	fs.Flag(&verbose, "verbose|v", "Verbosity level. May be set multiple times.")
+
+	args := []string{"-vv", "-n", "1", "-n", "2", "-v"}
+
+	if err := fs.Parse(args); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(fs.Usage())
+	fmt.Printf("Nums value: %v\n", nums)
+	fmt.Printf("Verbose value: %v\n", verbose)
+	// Output:
+	// Flags for app:
+	//
+	//     -n, --nums  =INT    default: 4,5
+	//         Numbers to use. May be set multiple times.
+	//
+	//     -v, --verbose  [=BOOL]
+	//         Verbosity level. May be set multiple times.
+	//
+	// Nums value: [1 2]
+	// Verbose value: [true true true]
+}

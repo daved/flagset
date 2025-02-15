@@ -1,6 +1,7 @@
 package fserrs
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 )
@@ -25,6 +26,8 @@ func (e *Error) Is(err error) bool {
 	return reflect.TypeOf(e) == reflect.TypeOf(err)
 }
 
+var ErrUnrecognizedFlag = errors.New("unrecognized flag")
+
 type ParseError struct {
 	child error
 }
@@ -46,15 +49,16 @@ func (e *ParseError) Is(err error) bool {
 }
 
 type ResolveError struct {
-	child error
+	child    error
+	FlagName string
 }
 
-func NewResolveError(child error) *ResolveError {
-	return &ResolveError{child}
+func NewResolveError(child error, flagName string) *ResolveError {
+	return &ResolveError{child, flagName}
 }
 
 func (e *ResolveError) Error() string {
-	return fmt.Sprintf("resolve: %v", e.child)
+	return fmt.Sprintf("resolve (flag name: %s): %v", e.FlagName, e.child)
 }
 
 func (e *ResolveError) Unwrap() error {
@@ -62,62 +66,5 @@ func (e *ResolveError) Unwrap() error {
 }
 
 func (e *ResolveError) Is(err error) bool {
-	return reflect.TypeOf(e) == reflect.TypeOf(err)
-}
-
-type FindFlagError struct {
-	child error
-}
-
-func NewFindFlagError(child error) *FindFlagError {
-	return &FindFlagError{child}
-}
-
-func (e *FindFlagError) Error() string {
-	return fmt.Sprintf("find flag: %v", e.child)
-}
-
-func (e *FindFlagError) Unwrap() error {
-	return e.child
-}
-
-func (e *FindFlagError) Is(err error) bool {
-	return reflect.TypeOf(e) == reflect.TypeOf(err)
-}
-
-type FlagHydrateError struct {
-	Name  string
-	child error
-}
-
-func NewFlagHydrateError(name string, child error) *FlagHydrateError {
-	return &FlagHydrateError{name, child}
-}
-
-func (e *FlagHydrateError) Error() string {
-	return fmt.Sprintf("hydrate (for %q): %v", e.Name, e.child)
-}
-
-func (e *FlagHydrateError) Unwrap() error {
-	return e.child
-}
-
-func (e *FlagHydrateError) Is(err error) bool {
-	return reflect.TypeOf(e) == reflect.TypeOf(err)
-}
-
-type FlagUnrecognizedError struct {
-	Name string
-}
-
-func NewFlagUnrecognizedError(name string) *FlagUnrecognizedError {
-	return &FlagUnrecognizedError{name}
-}
-
-func (e *FlagUnrecognizedError) Error() string {
-	return fmt.Sprintf("unrecognized flag: %q", e.Name)
-}
-
-func (e *FlagUnrecognizedError) Is(err error) bool {
 	return reflect.TypeOf(e) == reflect.TypeOf(err)
 }

@@ -2,7 +2,7 @@ package flagset
 
 import (
 	"github.com/daved/flagset/fserrs"
-	"github.com/daved/flagset/vtype"
+	"github.com/daved/vtype"
 )
 
 // Error types forward basic error types from sub-packages for access and

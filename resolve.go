@@ -2,10 +2,11 @@ package flagset
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	er "github.com/daved/flagset/fserrs"
-	"github.com/daved/flagset/vtype"
+	"github.com/daved/vtype"
 )
 
 type namedFlag struct {
@@ -48,7 +49,7 @@ func resolveFlags(flags []*Flag, args []string) ([]string, error) {
 					return nil, wrap(err, name)
 				}
 
-				if bv, ok := boolVal(flag.flag.val); ok {
+				if bv, ok := boolValRaw(flag.flag.val); ok {
 					if err = vtype.Hydrate(flag.flag.val, bv); err != nil {
 						return nil, wrap(err, flag.name)
 					}
@@ -79,7 +80,7 @@ func resolveFlags(flags []*Flag, args []string) ([]string, error) {
 				return nil, wrap(err, name)
 			}
 
-			if bv, ok := boolVal(flag.flag.val); ok {
+			if bv, ok := boolValRaw(flag.flag.val); ok {
 				if err = vtype.Hydrate(flag.flag.val, bv); err != nil {
 					return nil, wrap(err, flag.name)
 				}
@@ -119,12 +120,12 @@ func sliceContains(ss []string, s string) bool {
 	return false
 }
 
-func boolVal(val any) (string, bool) {
+func boolValRaw(val any) (string, bool) {
 	switch v := val.(type) {
-	case vtype.FlagCallback:
-		return "", v.IsBool()
-
 	case interface{ IsBool() bool }:
+		if reflect.ValueOf(val).Kind() == reflect.Func {
+			return "", v.IsBool()
+		}
 		return "true", v.IsBool()
 
 	case *bool:

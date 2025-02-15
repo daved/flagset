@@ -28,7 +28,7 @@ func NewDefaultTmplConfig() *TmplConfig {
 			return ""
 		}
 
-		_, isBool := boolVal(f.val)
+		_, isBool := boolValRaw(f.val)
 
 		pre, post := "=", ""
 		if len(f.Longs()) > 0 && isBool {

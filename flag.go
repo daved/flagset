@@ -1,13 +1,10 @@
 package flagset
 
 import (
-	"flag"
-	"fmt"
-	"reflect"
 	"strings"
 	"unicode/utf8"
 
-	"github.com/daved/flagset/vtype"
+	"github.com/daved/vtype"
 )
 
 // Flag manages flag option data. The exported fields are for easy
@@ -26,24 +23,7 @@ type Flag struct {
 }
 
 func newFlag(val any, names string, desc string) *Flag {
-	switch v := val.(type) {
-	case func(string) error:
-		val = vtype.FlagFunc(v)
-	case func(bool) error:
-		val = vtype.FlagBoolFunc(v)
-	default:
-		vo := reflect.ValueOf(val)
-		if vo.Kind() == reflect.Ptr {
-			vo = vo.Elem()
-		}
-
-		switch vo.Kind() {
-		case reflect.Slice:
-			vts := vtype.MakeSlice(val)
-			val = &vts
-		}
-	}
-
+	val = vtype.ConvertCompatible(val)
 	longs, shorts := longsAndShorts(names)
 
 	return &Flag{
@@ -51,8 +31,8 @@ func newFlag(val any, names string, desc string) *Flag {
 		longs:       longs,
 		shorts:      shorts,
 		desc:        desc,
-		TypeName:    typeName(val),
-		DefaultText: defaultText(val),
+		TypeName:    vtype.ValueTypeName(val),
+		DefaultText: vtype.DefaultValueText(val),
 		Meta:        map[string]any{},
 	}
 }
@@ -82,54 +62,4 @@ func longsAndShorts(flags string) (longs, shorts []string) {
 		longs = append(longs, f)
 	}
 	return longs, shorts
-}
-
-func typeName(val any) string {
-	switch v := val.(type) {
-	case interface{ UsageTypeName() string }:
-		return v.UsageTypeName()
-
-	case vtype.FlagCallback:
-		if v.IsBool() {
-			return "bool"
-		}
-		return "value"
-
-	case vtype.TextMarshalUnmarshaler, flag.Value:
-		return "value"
-
-	case error:
-		return ""
-
-	default:
-		rv := reflect.ValueOf(val)
-		if rv.Kind() == reflect.Ptr {
-			rv = rv.Elem()
-		}
-		return rv.Type().Name()
-	}
-}
-
-func defaultText(val any) string {
-	switch v := val.(type) {
-	case vtype.TextMarshalUnmarshaler:
-		t, err := v.MarshalText()
-		if err != nil {
-			return err.Error()
-		}
-		return string(t)
-
-	case vtype.FlagCallback, error:
-		return ""
-
-	case fmt.Stringer:
-		return v.String()
-
-	default:
-		vo := reflect.ValueOf(val)
-		if vo.Kind() == reflect.Ptr {
-			vo = vo.Elem()
-		}
-		return fmt.Sprint(vo)
-	}
 }

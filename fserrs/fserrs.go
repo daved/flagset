@@ -26,7 +26,7 @@ func (e *Error) Is(err error) bool {
 	return reflect.TypeOf(e) == reflect.TypeOf(err)
 }
 
-var ErrUnrecognizedFlag = errors.New("unrecognized flag")
+var ErrFlagUnrecognized = errors.New("flag unrecognized")
 
 type ParseError struct {
 	child error

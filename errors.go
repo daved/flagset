@@ -15,6 +15,6 @@ type (
 )
 
 var (
-	ErrUnrecognizedFlag = fserrs.ErrUnrecognizedFlag
+	ErrFlagUnrecognized = fserrs.ErrFlagUnrecognized
 	ErrTypeUnsupported  = vtype.ErrTypeUnsupported
 )

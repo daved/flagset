@@ -108,7 +108,7 @@ func findFlag(flags []*Flag, name string) (*namedFlag, error) {
 			return &namedFlag{flag, name}, nil
 		}
 	}
-	return nil, fmt.Errorf("find flag: %w", er.ErrUnrecognizedFlag)
+	return nil, fmt.Errorf("find flag: %w", er.ErrFlagUnrecognized)
 }
 
 func sliceContains(ss []string, s string) bool {

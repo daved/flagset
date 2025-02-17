@@ -5,7 +5,12 @@
 // -abc = -a -b -c).
 package flagset
 
-import er "github.com/daved/flagset/fserrs"
+import (
+	"slices"
+	"unicode/utf8"
+
+	er "github.com/daved/flagset/fserrs"
+)
 
 // FlagSet contains flag options and related information used for usage output.
 // The exported fields are for easy post-construction configuration.
@@ -38,6 +43,11 @@ func New(name string) *FlagSet {
 // Flags returns all flag options that have been set.
 func (fs *FlagSet) Flags() []*Flag {
 	return fs.flags
+}
+
+// Lookup returns the first encountered flag that matches the provided name.
+func (fs *FlagSet) Lookup(name string) *Flag {
+	return lookupFlag(fs.flags, name)
 }
 
 // Parsed returns the args provided when Parse was called with any single hyphen
@@ -132,4 +142,17 @@ func (fs *FlagSet) SetUsageTemplating(tmplCfg *TmplConfig) {
 // be leveraged to convey detailed info/behavior in a custom template.
 func (fs *FlagSet) Usage() string {
 	return executeTmpl(fs.tmplCfg, &TmplData{FlagSet: fs})
+}
+
+func lookupFlag(flags []*Flag, name string) *Flag {
+	for _, flag := range flags {
+		ss := flag.shorts
+		if utf8.RuneCountInString(name) > 1 {
+			ss = flag.longs
+		}
+		if slices.Contains(ss, name) {
+			return flag
+		}
+	}
+	return nil
 }

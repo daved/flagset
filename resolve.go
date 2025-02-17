@@ -1,7 +1,6 @@
 package flagset
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -44,7 +43,7 @@ func resolveFlags(flags []*Flag, args []string) ([]string, error) {
 
 			name := arg[2:]
 			if !strings.Contains(name, "=") {
-				flag, err = findFlag(flags, name)
+				flag, err = lookupFlagAsNamedFlag(flags, name)
 				if err != nil {
 					return nil, wrap(err, name)
 				}
@@ -60,7 +59,7 @@ func resolveFlags(flags []*Flag, args []string) ([]string, error) {
 
 			var raw string
 			name, raw, _ = strings.Cut(name, "=")
-			flag, err = findFlag(flags, name)
+			flag, err = lookupFlagAsNamedFlag(flags, name)
 			if err != nil {
 				return nil, wrap(err, name)
 			}
@@ -75,7 +74,7 @@ func resolveFlags(flags []*Flag, args []string) ([]string, error) {
 			name := arg[1:2]
 
 			var err error
-			flag, err = findFlag(flags, name)
+			flag, err = lookupFlagAsNamedFlag(flags, name)
 			if err != nil {
 				return nil, wrap(err, name)
 			}
@@ -98,26 +97,14 @@ func resolveFlags(flags []*Flag, args []string) ([]string, error) {
 	return nil, nil
 }
 
-func findFlag(flags []*Flag, name string) (*namedFlag, error) {
-	for _, flag := range flags {
-		ss := flag.shorts
-		if len(name) > 1 {
-			ss = flag.longs
-		}
-		if sliceContains(ss, name) {
-			return &namedFlag{flag, name}, nil
-		}
+func lookupFlagAsNamedFlag(flags []*Flag, name string) (*namedFlag, error) {
+	if flag := lookupFlag(flags, name); flag != nil {
+		return &namedFlag{
+			flag: flag,
+			name: name,
+		}, nil
 	}
-	return nil, fmt.Errorf("find flag: %w", er.ErrFlagUnrecognized)
-}
-
-func sliceContains(ss []string, s string) bool {
-	for _, v := range ss {
-		if v == s {
-			return true
-		}
-	}
-	return false
+	return nil, er.ErrFlagUnrecognized
 }
 
 func boolValRaw(val any) (string, bool) {

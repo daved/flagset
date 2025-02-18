@@ -89,7 +89,7 @@ func resolveFlags(flags []*Flag, args []string) ([]string, error) {
 	}
 
 	if flag != nil {
-		if err := vtype.Hydrate(flag, ""); err != nil {
+		if err := vtype.Hydrate(flag.flag.val, ""); err != nil {
 			return nil, wrap(err, flag.name)
 		}
 	}

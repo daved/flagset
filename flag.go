@@ -10,7 +10,7 @@ import (
 // Flag manages flag option data. Exported fields are for easy post-construction
 // configuration.
 type Flag struct {
-	// Fields used for templating:
+	// Templating
 	TypeName    string // is derived from the val type when possible
 	DefaultText string // is derived from the val value when possible
 	HideUsage   bool

@@ -7,22 +7,53 @@ import (
 	"text/template"
 )
 
-// TmplData is the structure used for usage output templating. Custom template
-// string values should be based on this type.
-type TmplData struct {
-	FlagSet *FlagSet
-}
-
-// TmplConfig tracks the template string and function map used for usage output
-// templating.
-type TmplConfig struct {
+// Tmpl holds template configuration details.
+type Tmpl struct {
 	Text string
 	FMap template.FuncMap
+	Data any
 }
 
-// NewDefaultTmplConfig returns the default TmplConfig value. This can be used
-// as an example of how to setup custom usage output templating.
-func NewDefaultTmplConfig() *TmplConfig {
+// Execute parses the template text and funcmap, then executes it using the set
+// data.
+func (t *Tmpl) Execute() (string, error) {
+	tmpl := template.New("clic").Funcs(t.FMap)
+
+	buf := &bytes.Buffer{}
+
+	tmpl, err := tmpl.Parse(t.Text)
+	if err != nil {
+		return "", err
+	}
+
+	if err := tmpl.Execute(buf, t.Data); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
+// String calls the Execute method returning either the validly executed
+// template output or error message text.
+func (t *Tmpl) String() string {
+	s, err := t.Execute()
+	if err != nil {
+		s = fmt.Sprintf("%v\n", err)
+	}
+	return s
+}
+
+// NewUsageTmpl returns the default template configuration. This can be used as
+// an example of how to setup custom usage output templating.
+func NewUsageTmpl(fs *FlagSet) *Tmpl {
+	type tmplData struct {
+		FlagSet *FlagSet
+	}
+
+	data := &tmplData{
+		FlagSet: fs,
+	}
+
 	typeHintFn := func(f *Flag) string {
 		if f.TypeName == "" {
 			return ""
@@ -46,13 +77,13 @@ func NewDefaultTmplConfig() *TmplConfig {
 		return "default: " + f.DefaultText
 	}
 
-	tmplFMap := template.FuncMap{
+	fMap := template.FuncMap{
 		"Join":        strings.Join,
 		"TypeHint":    typeHintFn,
 		"DefaultHint": defaultHintFn,
 	}
 
-	tmplText := strings.TrimSpace(`
+	text := strings.TrimSpace(`
 {{- if .FlagSet.Flags -}}
 Flags for {{.FlagSet.Name}}:
 {{range $i, $flag := .FlagSet.Flags}}
@@ -66,27 +97,5 @@ Flags for {{.FlagSet.Name}}:
 {{end}}{{else}}{{- end}}
 `)
 
-	return &TmplConfig{
-		Text: tmplText,
-		FMap: tmplFMap,
-	}
-}
-
-func executeTmpl(tc *TmplConfig, data any) string {
-	tmpl := template.New("flagset").Funcs(tc.FMap)
-
-	buf := &bytes.Buffer{}
-
-	tmpl, err := tmpl.Parse(tc.Text)
-	if err != nil {
-		fmt.Fprintf(buf, "%v\n", err)
-		return buf.String()
-	}
-
-	if err := tmpl.Execute(buf, data); err != nil {
-		fmt.Fprintf(buf, "%v\n", err)
-		return buf.String()
-	}
-
-	return buf.String()
+	return &Tmpl{text, fMap, data}
 }

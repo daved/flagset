@@ -7,8 +7,8 @@ import (
 	"github.com/daved/vtype"
 )
 
-// Flag manages flag option data. The exported fields are for easy
-// post-construction configuration.
+// Flag manages flag option data. Exported fields are for easy post-construction
+// configuration.
 type Flag struct {
 	// Fields used for templating:
 	TypeName    string // is derived from the val type when possible

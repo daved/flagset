@@ -13,6 +13,7 @@ import (
 // used for easy post-construction configuration.
 type FlagSet struct {
 	// Fields used for templating:
+	Tmpl             *Tmpl // set to NewUsageTmpl by default
 	HideTypeHints    bool
 	HideDefaultHints bool
 	Meta             map[string]any
@@ -21,8 +22,6 @@ type FlagSet struct {
 	flags  []*Flag
 	parsed []string
 	ops    []string
-
-	Tmpl *Tmpl
 }
 
 // New constructs a FlagSet. Package convention is to name the flagset after the

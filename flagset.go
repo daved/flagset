@@ -12,7 +12,7 @@ import (
 // FlagSet contains flag options and usage-related values. Exported fields are
 // used for easy post-construction configuration.
 type FlagSet struct {
-	// Fields used for templating:
+	// Templating
 	Tmpl             *Tmpl // set to NewUsageTmpl by default
 	HideTypeHints    bool
 	HideDefaultHints bool

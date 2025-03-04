@@ -2,7 +2,7 @@ package flagset
 
 import (
 	"github.com/daved/flagset/fserrs"
-	"github.com/daved/vtype"
+	"github.com/daved/vtypes"
 )
 
 // Error types forward basic error types from sub-packages for access and
@@ -16,5 +16,6 @@ type (
 
 var (
 	ErrFlagUnrecognized = fserrs.ErrFlagUnrecognized
-	ErrTypeUnsupported  = vtype.ErrTypeUnsupported
+	ErrTypeUnsupported  = vtypes.ErrTypeUnsupported
+	ErrValueUnsupported = vtypes.ErrValueUnsupported
 )

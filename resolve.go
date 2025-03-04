@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	er "github.com/daved/flagset/fserrs"
-	"github.com/daved/vtype"
+	"github.com/daved/vtypes"
 )
 
 type namedFlag struct {
@@ -19,7 +19,7 @@ func resolveFlags(flags []*Flag, args []string) ([]string, error) {
 
 	for i, arg := range args {
 		if flag != nil { // expecting flag value
-			if err := vtype.Hydrate(flag.flag.val, arg); err != nil {
+			if err := vtypes.Hydrate(flag.flag.val, arg); err != nil {
 				return nil, wrap(err, flag.name)
 			}
 
@@ -49,7 +49,7 @@ func resolveFlags(flags []*Flag, args []string) ([]string, error) {
 				}
 
 				if bv, ok := boolValRaw(flag.flag.val); ok {
-					if err = vtype.Hydrate(flag.flag.val, bv); err != nil {
+					if err = vtypes.Hydrate(flag.flag.val, bv); err != nil {
 						return nil, wrap(err, flag.name)
 					}
 					flag = nil
@@ -64,7 +64,7 @@ func resolveFlags(flags []*Flag, args []string) ([]string, error) {
 				return nil, wrap(err, name)
 			}
 
-			if err := vtype.Hydrate(flag.flag.val, raw); err != nil {
+			if err := vtypes.Hydrate(flag.flag.val, raw); err != nil {
 				return nil, wrap(err, flag.name)
 			}
 
@@ -80,7 +80,7 @@ func resolveFlags(flags []*Flag, args []string) ([]string, error) {
 			}
 
 			if bv, ok := boolValRaw(flag.flag.val); ok {
-				if err = vtype.Hydrate(flag.flag.val, bv); err != nil {
+				if err = vtypes.Hydrate(flag.flag.val, bv); err != nil {
 					return nil, wrap(err, flag.name)
 				}
 				flag = nil
@@ -89,7 +89,7 @@ func resolveFlags(flags []*Flag, args []string) ([]string, error) {
 	}
 
 	if flag != nil {
-		if err := vtype.Hydrate(flag.flag.val, ""); err != nil {
+		if err := vtypes.Hydrate(flag.flag.val, ""); err != nil {
 			return nil, wrap(err, flag.name)
 		}
 	}

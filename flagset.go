@@ -88,11 +88,11 @@ func (fs *FlagSet) Parse(args []string) error {
 	return nil
 }
 
-// Flag adds a flag option to the FlagSet. See [vtype.Hydrate] for details about
-// which value types are supported. Names can include multiple long and multiple
-// short values, each separated by a pipe (|) character. If val has a usable
-// non-zero value, it will be used as the flag's default value. Functions
-// compatible with [vtype] typed functions will be auto-converted.
+// Flag adds a flag option to the FlagSet. See [vtypes.Hydrate] for details
+// about which value types are supported. Names can include multiple long and
+// multiple short values, each separated by a pipe (|) character. If val has a
+// usable non-zero value, it will be used as the flag's default value. Functions
+// compatible with [vtypes] typed functions will be auto-converted.
 func (fs *FlagSet) Flag(val any, names, desc string) *Flag {
 	flag := newFlag(val, names, desc)
 	fs.flags = append(fs.flags, flag)

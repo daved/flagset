@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/daved/vtype"
+	"github.com/daved/vtypes"
 )
 
 // Flag manages flag option data. Exported fields are for easy post-construction
@@ -23,7 +23,7 @@ type Flag struct {
 }
 
 func newFlag(val any, names string, desc string) *Flag {
-	val = vtype.ConvertCompatible(val)
+	val = vtypes.ConvertCompatible(val)
 	longs, shorts := longsAndShorts(names)
 
 	return &Flag{
@@ -31,8 +31,8 @@ func newFlag(val any, names string, desc string) *Flag {
 		longs:       longs,
 		shorts:      shorts,
 		desc:        desc,
-		TypeName:    vtype.ValueTypeName(val),
-		DefaultText: vtype.DefaultValueText(val),
+		TypeName:    vtypes.ValueTypeName(val),
+		DefaultText: vtypes.DefaultValueText(val),
 		Meta:        map[string]any{},
 	}
 }
